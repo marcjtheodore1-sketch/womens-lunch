@@ -260,7 +260,7 @@ async function submitBooking() {
         const result = await response.json();
         
         if (response.ok) {
-            elements.confirmationMessage.textContent = result.confirmation_message;
+            elements.confirmationMessage.innerHTML = result.confirmation_message;
             showStep('confirmation');
         } else {
             alert(result.error || 'Failed to create booking');
