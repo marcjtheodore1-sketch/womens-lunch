@@ -137,9 +137,7 @@ Meeting Options:
 Your Order:
 - Main: {{main_course}}
 - Drink: {{drink}}
-{% if dietary_requirements %}
-Dietary Requirements: {{dietary_requirements}}
-{% endif %}
+{{dietary_requirements}}
 
 What to expect:
 This is a relaxed, neuroaffirming space for autistic women to connect over lunch. You can choose a main course and one non-alcoholic drink which London Autism Group Charity will be happy to cover. There is always at least one charity volunteer onsite to welcome you and help you feel comfortable.
@@ -402,6 +400,13 @@ def create_booking():
     template = get_setting('confirmation_message', get_default_confirmation_message())
     date_display = lunch_date.lunch_date.strftime('%A, %B %d, %Y')
     
+    # Format dietary requirements line
+    dietary = data.get('dietary_requirements', '').strip()
+    if dietary:
+        dietary_line = f"- Dietary Requirements: {dietary}"
+    else:
+        dietary_line = ""
+    
     confirmation_message = format_confirmation_message(
         template,
         name=f"{first_name} {last_name}",
@@ -409,7 +414,7 @@ def create_booking():
         date=date_display,
         main_course=main_course,
         drink=drink,
-        dietary_requirements=data.get('dietary_requirements', ''),
+        dietary_requirements=dietary_line,
         cancel_url=f"{request.host_url.rstrip('/')}/cancel/{cancel_token}"
     )
     
@@ -643,6 +648,18 @@ def admin_update_settings():
         set_setting('confirmation_message', data['confirmation_message'])
     
     return jsonify({'success': True})
+
+@app.route('/api/admin/bookings/<int:booking_id>', methods=['DELETE'])
+@admin_required
+def admin_delete_booking(booking_id):
+    """Delete a booking completely (not just cancel)"""
+    booking = Booking.query.get_or_404(booking_id)
+    
+    # Permanently delete the booking
+    db.session.delete(booking)
+    db.session.commit()
+    
+    return jsonify({'success': True, 'message': 'Booking deleted permanently'})
 
 # ============================================================================
 # INITIALIZATION

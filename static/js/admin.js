@@ -171,6 +171,9 @@ function renderBookingsByDate(bookings, containerId, isArchive) {
                                 ${booking.phone ? `<br><small>${escapeHtml(booking.phone)}</small>` : ''}
                                 ${booking.is_first_time ? '<br><small>(First time)</small>' : ''}
                             </div>
+                            <div class="booking-actions">
+                                <button class="btn btn-small btn-danger" onclick="deleteBooking(${booking.id}, '${containerId}')">Delete</button>
+                            </div>
                         </div>
                     `).join('')}
                 </div>
@@ -189,6 +192,31 @@ function toggleDateGroup(header) {
     } else {
         group.classList.add('expanded');
         header.querySelector('.toggle-icon').textContent = '▼';
+    }
+}
+
+async function deleteBooking(bookingId, containerId) {
+    if (!confirm('Are you sure you want to permanently delete this booking? This cannot be undone.')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/admin/bookings/${bookingId}`, {
+            method: 'DELETE'
+        });
+        
+        if (response.ok) {
+            // Reload the bookings list
+            if (containerId === 'bookings-by-date') {
+                loadBookings();
+            } else {
+                loadArchivedBookings();
+            }
+        } else {
+            alert('Failed to delete booking');
+        }
+    } catch (error) {
+        alert('Network error');
     }
 }
 
@@ -214,7 +242,9 @@ Your Order:
 {{dietary_requirements}}
 
 What to expect:
-This is a relaxed, neuroaffirming space for autistic women to connect over lunch. The £20 contribution covers your main course and non-alcoholic drink. There is always at least one charity volunteer onsite to welcome you and help you feel comfortable.
+This is a relaxed, neuroaffirming space for autistic women to connect over lunch. You can choose a main course and one non-alcoholic drink which London Autism Group Charity will be happy to cover. There is always at least one charity volunteer onsite to welcome you and help you feel comfortable.
+
+Self-identification is fine — you don't need a formal diagnosis.
 
 Location: https://maps.app.goo.gl/Wyh2E9CQU7UqpBCs9
 
