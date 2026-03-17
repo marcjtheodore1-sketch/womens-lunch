@@ -121,31 +121,40 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def get_default_confirmation_message():
-    return """<!DOCTYPE html>
+def generate_confirmation_message(name, first_name, date_display, main_course, drink, dietary_requirements, cancel_url):
+    """Generate a nice HTML confirmation message"""
+    
+    # Build dietary line if provided
+    if dietary_requirements and dietary_requirements.strip():
+        dietary_line = f'<br>- Dietary Requirements: {dietary_requirements}'
+    else:
+        dietary_line = ''
+    
+    return f"""<!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <style>
-        body { font-family: Tahoma, Verdana, Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #1a1a1a; max-width: 600px; margin: 0 auto; padding: 20px; }
-        h2 { color: #276749; font-size: 18px; margin-bottom: 5px; }
-        .header { background: #f0fff4; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #68d391; }
-        .section { margin-bottom: 15px; }
-        .label { font-weight: bold; color: #276749; }
-        .order-box { background: #f7fafc; padding: 12px; border-radius: 6px; margin: 10px 0; }
-        a { color: #276749; text-decoration: underline; }
-        .cancel-link { background: #f0fff4; padding: 12px; border-radius: 6px; text-align: center; margin: 15px 0; }
-        .footer { margin-top: 25px; padding-top: 15px; border-top: 1px solid #c6f6d5; font-size: 12px; color: #4a4a4a; }
+        body {{ font-family: Tahoma, Verdana, Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #1a1a1a; max-width: 600px; margin: 0 auto; padding: 20px; }}
+        h2 {{ color: #276749; font-size: 18px; margin-bottom: 5px; }}
+        .header {{ background: #f0fff4; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #68d391; }}
+        .section {{ margin-bottom: 15px; }}
+        .label {{ font-weight: bold; color: #276749; }}
+        .order-box {{ background: #f7fafc; padding: 12px; border-radius: 6px; margin: 10px 0; }}
+        a {{ color: #276749; text-decoration: underline; }}
+        a:hover {{ color: #48bb78; }}
+        .cancel-link {{ background: #f0fff4; padding: 12px; border-radius: 6px; text-align: center; margin: 15px 0; }}
+        .footer {{ margin-top: 25px; padding-top: 15px; border-top: 1px solid #c6f6d5; font-size: 12px; color: #4a4a4a; }}
     </style>
 </head>
 <body>
     <div class="header">
         <h2>✅ Booking Confirmed!</h2>
-        <p>Dear {{name}}, your booking for the LAGC Autistic Women's Lunch has been confirmed.</p>
+        <p>Dear {name}, your booking for the LAGC Autistic Women's Lunch has been confirmed.</p>
     </div>
 
     <div class="section">
-        <span class="label">Date:</span> {{date}}<br>
+        <span class="label">Date:</span> {date_display}<br>
         <span class="label">Time:</span> 12:00 PM - 1:00 PM<br>
         <span class="label">Venue:</span> Cittie of Yorke, 22 High Holborn, London WC1V 6BN<br>
         <span class="label">Location:</span> <a href="https://maps.app.goo.gl/Wyh2E9CQU7UqpBCs9">View on Google Maps</a>
@@ -161,9 +170,9 @@ def get_default_confirmation_message():
 
     <div class="order-box">
         <span class="label">Your Order:</span><br>
-        Main: {{main_course}}<br>
-        Drink: {{drink}}
-        {{dietary_requirements}}
+        - Main: {main_course}<br>
+        - Drink: {drink}
+        {dietary_line}
     </div>
 
     <div class="section">
@@ -177,7 +186,7 @@ def get_default_confirmation_message():
 
     <div class="cancel-link">
         <span class="label">Need to cancel?</span><br>
-        <a href="{{cancel_url}}">Click here to cancel your booking</a>
+        <a href="{cancel_url}">Click here to cancel your booking</a>
     </div>
 
     <div class="footer">
@@ -433,25 +442,18 @@ def create_booking():
     db.session.commit()
     
     # Generate confirmation message
-    template = get_setting('confirmation_message', get_default_confirmation_message())
     date_display = lunch_date.lunch_date.strftime('%A, %B %d, %Y')
-    
-    # Format dietary requirements line
     dietary = data.get('dietary_requirements', '').strip()
-    if dietary:
-        dietary_line = f"- Dietary Requirements: {dietary}"
-    else:
-        dietary_line = ""
+    cancel_url = f"{request.host_url.rstrip('/')}/cancel/{cancel_token}"
     
-    confirmation_message = format_confirmation_message(
-        template,
+    confirmation_message = generate_confirmation_message(
         name=f"{first_name} {last_name}",
         first_name=first_name,
-        date=date_display,
+        date_display=date_display,
         main_course=main_course,
         drink=drink,
-        dietary_requirements=dietary_line,
-        cancel_url=f"{request.host_url.rstrip('/')}/cancel/{cancel_token}"
+        dietary_requirements=dietary,
+        cancel_url=cancel_url
     )
     
     # Send confirmation email to user
