@@ -213,12 +213,17 @@ def format_confirmation_message(template, **kwargs):
 
 def send_confirmation_email(to_email, subject, html_message):
     """Send confirmation email with HTML"""
+    print(f"[DEBUG] Sending email to {to_email}")
+    print(f"[DEBUG] ENABLE_EMAIL: {app.config['ENABLE_EMAIL']}")
+    print(f"[DEBUG] SMTP_USER: {app.config['SMTP_USER']}")
+    
     if not app.config['ENABLE_EMAIL'] or not app.config['SMTP_USER']:
         print(f"[EMAIL WOULD BE SENT TO {to_email}]")
         print(f"Subject: {subject}")
         return True
     
     try:
+        print(f"[DEBUG] Connecting to {app.config['SMTP_HOST']}:{app.config['SMTP_PORT']}")
         smtp_password = app.config['SMTP_PASSWORD']
         
         msg = MIMEMultipart('alternative')
@@ -229,14 +234,21 @@ def send_confirmation_email(to_email, subject, html_message):
         # Attach HTML version
         msg.attach(MIMEText(html_message, 'html'))
         
+        print(f"[DEBUG] Starting SMTP connection...")
         with smtplib.SMTP(app.config['SMTP_HOST'], app.config['SMTP_PORT']) as server:
+            print(f"[DEBUG] Starting TLS...")
             server.starttls()
+            print(f"[DEBUG] Logging in...")
             server.login(app.config['SMTP_USER'], smtp_password)
+            print(f"[DEBUG] Sending message...")
             server.send_message(msg)
+            print(f"[DEBUG] Email sent successfully!")
         
         return True
     except Exception as e:
         print(f"[ERROR] Failed to send email: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 def init_default_data():
