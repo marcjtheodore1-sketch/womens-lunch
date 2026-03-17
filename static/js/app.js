@@ -308,7 +308,8 @@ function resetBooking() {
 // ============================================
 
 async function loadMyBookings() {
-    const email = document.getElementById('my-bookings-email').value.trim();
+    const emailInput = document.getElementById('my-bookings-email');
+    const email = emailInput ? emailInput.value.trim() : '';
     
     if (!email) {
         alert('Please enter your email address');
@@ -317,18 +318,24 @@ async function loadMyBookings() {
     
     const listElement = document.getElementById('my-bookings-list');
     if (!listElement) {
-        alert('Error: Could not find bookings list element');
+        console.error('my-bookings-list element not found');
         return;
     }
     
+    // Show loading
+    listElement.innerHTML = '<p>Loading...</p>';
+    
     try {
+        console.log('Fetching bookings for:', email);
         const response = await fetch('/api/my-bookings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email })
+            body: JSON.stringify({ email: email })
         });
         
+        console.log('Response status:', response.status);
         const bookings = await response.json();
+        console.log('Bookings:', bookings);
         
         if (response.ok) {
             renderMyBookings(bookings);
@@ -337,7 +344,7 @@ async function loadMyBookings() {
         }
     } catch (error) {
         console.error('Error loading bookings:', error);
-        listElement.innerHTML = '<p class="error-text">Failed to load bookings. Please try again.</p>';
+        listElement.innerHTML = '<p class="error-text">Failed to load bookings. Check console for details.</p>';
     }
 }
 

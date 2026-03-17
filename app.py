@@ -539,30 +539,44 @@ def cancel_booking(token):
 @app.route('/api/my-bookings', methods=['POST'])
 def get_my_bookings():
     """Get all bookings for an email address"""
-    data = request.get_json()
-    email = data.get('email', '').strip().lower()
-    
-    if not email:
-        return jsonify({'error': 'Email is required'}), 400
-    
-    bookings = Booking.query.filter(
-        Booking.email == email,
-        Booking.cancelled_at.is_(None),
-        Booking.lunch_date_ref.has(LunchDate.lunch_date >= datetime.now().date())
-    ).order_by(Booking.lunch_date_ref.lunch_date).all()
-    
-    result = []
-    for booking in bookings:
-        result.append({
-            'id': booking.id,
-            'date': booking.lunch_date_ref.lunch_date.isoformat(),
-            'date_display': booking.lunch_date_ref.lunch_date.strftime('%A, %B %d, %Y'),
-            'main_course': booking.main_course,
-            'drink': booking.drink,
-            'cancel_token': booking.cancel_token
-        })
-    
-    return jsonify(result)
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data received'}), 400
+            
+        email = data.get('email', '').strip().lower()
+        
+        if not email:
+            return jsonify({'error': 'Email is required'}), 400
+        
+        today = datetime.now().date()
+        
+        # Get all bookings for this email that are not cancelled
+        bookings = Booking.query.filter(
+            Booking.email == email,
+            Booking.cancelled_at.is_(None)
+        ).all()
+        
+        result = []
+        for booking in bookings:
+            # Only include future bookings
+            if booking.lunch_date_ref and booking.lunch_date_ref.lunch_date >= today:
+                result.append({
+                    'id': booking.id,
+                    'date': booking.lunch_date_ref.lunch_date.isoformat(),
+                    'date_display': booking.lunch_date_ref.lunch_date.strftime('%A, %B %d, %Y'),
+                    'main_course': booking.main_course,
+                    'drink': booking.drink,
+                    'cancel_token': booking.cancel_token
+                })
+        
+        # Sort by date
+        result.sort(key=lambda x: x['date'])
+        
+        return jsonify(result)
+    except Exception as e:
+        print(f"Error in get_my_bookings: {e}")
+        return jsonify({'error': 'Server error occurred'}), 500
 
 # ============================================================================
 # ADMIN API ENDPOINTS
