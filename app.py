@@ -330,7 +330,7 @@ def create_booking():
     last_name = data['last_name'].strip()
     email = data['email'].strip().lower()
     main_course = data['main_course'].strip()
-    drink = data['drrink'].strip()
+    drink = data['drink'].strip()
     is_first_time = data['is_first_time']
     
     # Validate names
