@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+
+{% block title %}Book Lunch - LAGC Autistic Women's Lunch{% endblock %}
+
+{% block content %}
+<div class="booking-page">
+    <h1>Book Your Place</h1>
+    <p class="subtitle">Complete the form below to reserve your spot at the next lunch</p>
+
+    <div class="booking-form">
+        <!-- Step 1: Select Date -->
+        <div class="form-step" id="step-date">
+            <h2>Step 1: Select Lunch Date</h2>
+            <div id="dates-info">
+                <p class="loading">Loading available dates...</p>
+            </div>
+            <div class="date-selection" id="date-selection">
+                <!-- Dates loaded by JS -->
+            </div>
+        </div>
+
+        <!-- Step 2: Your Details -->
+        <div class="form-step hidden" id="step-details">
+            <h2>Step 2: Your Details</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="first-name">First Name *</label>
+                    <input type="text" id="first-name" required>
+                </div>
+                <div class="form-group">
+                    <label for="last-name">Last Name *</label>
+                    <input type="text" id="last-name" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="email">Email Address *</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label for="phone">Phone Number (optional)</label>
+                <input type="tel" id="phone">
+            </div>
+            <div class="step-actions">
+                <button class="btn btn-secondary" onclick="resetDate()">← Back</button>
+                <button class="btn btn-primary" onclick="showMenuStep()">Continue →</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Menu Selection -->
+        <div class="form-step hidden" id="step-menu">
+            <h2>Step 3: Your Order</h2>
+            <p class="hint">Please check the <a href="https://cittieofyorkeholborn.co.uk/menus/" target="_blank">menu</a> and tell us what you'd like.</p>
+            
+            <div class="form-group">
+                <label for="main-course">Main Course *</label>
+                <input type="text" id="main-course" placeholder="e.g., Fish and Chips" required>
+                <small>Please include any modifications (e.g., 'no peas')</small>
+            </div>
+            <div class="form-group">
+                <label for="drink">Non-Alcoholic Drink *</label>
+                <input type="text" id="drink" placeholder="e.g., Diet Coke, Orange Juice" required>
+            </div>
+            <div class="form-group">
+                <label for="dietary">Dietary Requirements or Allergies</label>
+                <textarea id="dietary" rows="2" placeholder="e.g., Gluten free, Vegetarian, Nut allergy"></textarea>
+            </div>
+            <div class="step-actions">
+                <button class="btn btn-secondary" onclick="showDetailsStep()">← Back</button>
+                <button class="btn btn-primary" onclick="showFinalStep()">Continue →</button>
+            </div>
+        </div>
+
+        <!-- Step 4: Final Questions -->
+        <div class="form-step hidden" id="step-final">
+            <h2>Step 4: Almost Done</h2>
+            
+            <div class="form-group">
+                <label>Is this your first time attending? *</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" name="first-time" value="true" checked>
+                        Yes, this is my first time
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" name="first-time" value="false">
+                        No, I've attended before
+                    </label>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="additional-info">Anything else we should know?</label>
+                <textarea id="additional-info" rows="3" placeholder="e.g., Accessibility needs, I'll be arriving late, I'm nervous about meeting new people"></textarea>
+            </div>
+            
+            <div class="booking-summary" id="booking-summary"></div>
+            
+            <div class="step-actions">
+                <button class="btn btn-secondary" onclick="showMenuStep()">← Back</button>
+                <button class="btn btn-primary" onclick="submitBooking()">Confirm Booking</button>
+            </div>
+        </div>
+
+        <!-- Step 5: Confirmation -->
+        <div class="form-step hidden" id="step-confirmation">
+            <h2>✅ Booking Confirmed!</h2>
+            <div class="confirmation-message" id="confirmation-message"></div>
+            <div class="step-actions">
+                <button class="btn btn-primary" onclick="resetBooking()">Make Another Booking</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Bookings Section -->
+    <div class="my-bookings-section">
+        <h2>My Bookings</h2>
+        <p>Enter your email to view or cancel your bookings:</p>
+        <div class="form-inline">
+            <input type="email" id="my-bookings-email" placeholder="your@email.com">
+            <button class="btn btn-secondary" onclick="loadMyBookings()">View My Bookings</button>
+        </div>
+        <div class="my-bookings-list" id="my-bookings-list"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% endblock %}

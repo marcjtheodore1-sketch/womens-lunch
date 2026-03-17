@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block title %}Admin - LAGC Autistic Women's Lunch{% endblock %}
+
+{% block content %}
+<div class="admin-page">
+    <div class="admin-header">
+        <h1>⚙️ LAGC Autistic Women's Lunch - Admin</h1>
+        <a href="/admin/logout" class="btn btn-secondary btn-small">Logout</a>
+    </div>
+
+    <div class="admin-tabs">
+        <button class="tab-btn active" onclick="showTab('dates')">Lunch Dates</button>
+        <button class="tab-btn" onclick="showTab('bookings')">Bookings</button>
+        <button class="tab-btn" onclick="showTab('archive')">Archive</button>
+        <button class="tab-btn" onclick="showTab('messages')">Message Template</button>
+    </div>
+
+    <!-- Dates Tab -->
+    <div class="tab-content active" id="tab-dates">
+        <h2>Manage Lunch Dates</h2>
+        <p class="hint">Toggle which dates are open for booking. Only one date should be bookable at a time.</p>
+        <div class="dates-list" id="admin-dates-list">
+            <p class="loading">Loading dates...</p>
+        </div>
+    </div>
+
+    <!-- Bookings Tab -->
+    <div class="tab-content" id="tab-bookings">
+        <h2>Upcoming Lunch Bookings</h2>
+        <div class="bookings-by-date-container" id="bookings-by-date">
+            <p class="loading">Loading bookings...</p>
+        </div>
+    </div>
+
+    <!-- Archive Tab -->
+    <div class="tab-content" id="tab-archive">
+        <h2>📁 Booking Archive</h2>
+        <p class="hint">Past bookings from previous lunch dates.</p>
+        <div class="bookings-by-date-container" id="archive-bookings">
+            <p class="loading">Loading archived bookings...</p>
+        </div>
+    </div>
+
+    <!-- Messages Tab -->
+    <div class="tab-content" id="tab-messages">
+        <h2>Confirmation Message Template</h2>
+        <p class="hint">Customize the email sent to users after booking. Available variables:</p>
+        <ul class="variables-list">
+            <li><code>{{name}}</code> - User's full name</li>
+            <li><code>{{first_name}}</code> - First name only</li>
+            <li><code>{{date}}</code> - Lunch date</li>
+            <li><code>{{main_course}}</code> - Selected main</li>
+            <li><code>{{drink}}</code> - Selected drink</li>
+            <li><code>{{dietary_requirements}}</code> - Dietary requirements</li>
+            <li><code>{{cancel_url}}</code> - URL to cancel booking</li>
+        </ul>
+        <div class="form-group">
+            <textarea id="confirmation-template" rows="20" class="code-editor"></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="saveMessageTemplate()">Save Template</button>
+        <button class="btn btn-secondary" onclick="resetMessageTemplate()">Reset to Default</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

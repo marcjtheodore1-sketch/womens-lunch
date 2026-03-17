@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}LAGC Autistic Women's Lunch{% endblock %}
+
+{% block content %}
+<div class="landing-page">
+    <div class="landing-header">
+        <h1>Autistic Women's Lunch</h1>
+        <p class="subtitle">A monthly meetup run by London Autism Group Charity for autistic women to connect over good food</p>
+    </div>
+
+    <div class="landing-content">
+        <div class="info-section">
+            <p class="intro-text">
+                This is a <strong>relaxed, neuroaffirming monthly lunch for autistic women aged 18+</strong> run by London Autism Group Charity.
+            </p>
+            <p class="intro-text" style="margin-top: 0.5rem; color: var(--text-light);">
+                Self-identification is fine — you don't need a formal diagnosis.
+            </p>
+
+            <div class="initiative-description">
+                <p>Join us for a casual lunch at a traditional London pub. You can choose a main course and one non-alcoholic drink which the charity will be happy to cover. It's a chance to meet other autistic women, share experiences, or simply enjoy a meal in good company.</p>
+                <p><strong>No pressure to socialise</strong> — you can chat as much or as little as you like. There is always at least one charity volunteer onsite to welcome you.</p>
+            </div>
+        </div>
+
+        <div class="lunch-details">
+            <h2>🍽️ What to Expect</h2>
+            <ul class="details-list">
+                <li>Monthly lunches</li>
+                <li>12:00 PM - 1:00 PM</li>
+                <li>Maximum 12 people per lunch</li>
+                <li>Main course and one non-alcoholic drink covered by the charity</li>
+                <li>Relaxed, understanding environment</li>
+                <li>Always at least one charity volunteer onsite</li>
+            </ul>
+        </div>
+
+        <div class="venue-section">
+            <h2>📍 Venue</h2>
+            <div class="venue-info">
+                <h3>Cittie of Yorke</h3>
+                <p>22 High Holborn, London WC1V 6BN</p>
+                <p>
+                    <a href="https://maps.app.goo.gl/Wyh2E9CQU7UqpBCs9" target="_blank" class="map-link">
+                        View on Google Maps →
+                    </a>
+                </p>
+                <p class="venue-note">A historic Samuel Smith pub with a relaxed atmosphere, tucked away from the busy street.</p>
+                <div class="meeting-info" style="margin-top: 1rem; padding: 1rem; background: #e6fffa; border-radius: 8px; border-left: 4px solid #38b2ac;">
+                    <p><strong>🕐 Meeting Time:</strong> 11:40 AM at Holy Sepulchre Church (nearby)</p>
+                    <p style="margin-top: 0.5rem; color: var(--text-light);">A volunteer will meet you outside the church and walk with you to the pub. Alternatively, you can meet directly at the pub at 12:00 PM.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-section">
+            <h2>🥣 Menu</h2>
+            <p>Please view the menu and decide what you'd like to order when you book:</p>
+            <a href="https://cittieofyorkeholborn.co.uk/menus/" target="_blank" class="btn btn-secondary btn-large">
+                View Cittie of Yorke Menu →
+            </a>
+            <p class="menu-note">The charity will cover a main course and a soft drink. Please check prices when ordering.</p>
+        </div>
+
+        <div class="cta-section">
+            <a href="/book" class="btn btn-primary btn-large">Book Your Place →</a>
+            <p class="cta-hint">Bookings open for the next lunch only</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
