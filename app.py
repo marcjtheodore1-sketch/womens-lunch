@@ -20,13 +20,13 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(16))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///lunch_bookings.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# Email configuration
-app.config['SMTP_HOST'] = os.environ.get('SMTP_HOST', 'smtp.gmail.com')
-app.config['SMTP_PORT'] = int(os.environ.get('SMTP_PORT', 587))
-app.config['SMTP_USER'] = os.environ.get('SMTP_USER', '')
-app.config['SMTP_PASSWORD'] = os.environ.get('SMTP_PASSWORD', '')
-app.config['SMTP_FROM'] = os.environ.get('SMTP_FROM', 'bookings@example.com')
-app.config['ENABLE_EMAIL'] = os.environ.get('ENABLE_EMAIL', 'false').lower() == 'true'
+# Email configuration - HARDCODED for production
+app.config['SMTP_HOST'] = 'smtp.gmail.com'
+app.config['SMTP_PORT'] = 587
+app.config['SMTP_USER'] = 'wg.lagc@gmail.com'
+app.config['SMTP_PASSWORD'] = 'hqeqxqzaecqopdyt'
+app.config['SMTP_FROM'] = 'wg.lagc@gmail.com'
+app.config['ENABLE_EMAIL'] = True
 
 # Admin password
 app.config['ADMIN_PASSWORD'] = os.environ.get('ADMIN_PASSWORD', 'womenslunch')
