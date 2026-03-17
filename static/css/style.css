@@ -701,6 +701,11 @@ h2 {
     color: var(--text-light);
 }
 
+.booking-actions {
+    min-width: 80px;
+    text-align: right;
+}
+
 /* Archive styling */
 .date-booking-group.archive .date-header {
     background: #f3f4f6;
