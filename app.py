@@ -122,38 +122,72 @@ def admin_required(f):
     return decorated_function
 
 def get_default_confirmation_message():
-    return """Dear {{name}},
+    return """<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Tahoma, Verdana, Arial, sans-serif; font-size: 14px; line-height: 1.6; color: #1a1a1a; max-width: 600px; margin: 0 auto; padding: 20px; }
+        h2 { color: #276749; font-size: 18px; margin-bottom: 5px; }
+        .header { background: #f0fff4; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #68d391; }
+        .section { margin-bottom: 15px; }
+        .label { font-weight: bold; color: #276749; }
+        .order-box { background: #f7fafc; padding: 12px; border-radius: 6px; margin: 10px 0; }
+        a { color: #276749; text-decoration: underline; }
+        .cancel-link { background: #f0fff4; padding: 12px; border-radius: 6px; text-align: center; margin: 15px 0; }
+        .footer { margin-top: 25px; padding-top: 15px; border-top: 1px solid #c6f6d5; font-size: 12px; color: #4a4a4a; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>✅ Booking Confirmed!</h2>
+        <p>Dear {{name}}, your booking for the LAGC Autistic Women's Lunch has been confirmed.</p>
+    </div>
 
-Your booking for the LAGC Autistic Women's Lunch has been confirmed!
+    <div class="section">
+        <span class="label">Date:</span> {{date}}<br>
+        <span class="label">Time:</span> 12:00 PM - 1:00 PM<br>
+        <span class="label">Venue:</span> Cittie of Yorke, 22 High Holborn, London WC1V 6BN<br>
+        <span class="label">Location:</span> <a href="https://maps.app.goo.gl/Wyh2E9CQU7UqpBCs9">View on Google Maps</a>
+    </div>
 
-Date: {{date}}
-Time: 12:00 PM - 1:00 PM
-Venue: Cittie of Yorke, 22 High Holborn, London WC1V 6BN
+    <div class="section">
+        <span class="label">Meeting Options:</span>
+        <ul>
+            <li>Meet a volunteer at Holy Sepulchre Church at 11:40 AM (they will walk with you to the pub)</li>
+            <li>Or meet directly at the pub at 12:00 PM</li>
+        </ul>
+    </div>
 
-Meeting Options:
-• Meet a volunteer at Holy Sepulchre Church at 11:40 AM (they will walk with you to the pub)
-• Or meet directly at the pub at 12:00 PM
+    <div class="order-box">
+        <span class="label">Your Order:</span><br>
+        Main: {{main_course}}<br>
+        Drink: {{drink}}
+        {{dietary_requirements}}
+    </div>
 
-Your Order:
-- Main: {{main_course}}
-- Drink: {{drink}}
-{{dietary_requirements}}
+    <div class="section">
+        <span class="label">What to expect:</span><br>
+        This is a relaxed, neuroaffirming space for autistic women to connect over lunch. You can choose a main course and one non-alcoholic drink which London Autism Group Charity will be happy to cover. There is always at least one charity volunteer onsite to welcome you and help you feel comfortable.
+    </div>
 
-What to expect:
-This is a relaxed, neuroaffirming space for autistic women to connect over lunch. You can choose a main course and one non-alcoholic drink which London Autism Group Charity will be happy to cover. There is always at least one charity volunteer onsite to welcome you and help you feel comfortable.
+    <div class="section">
+        Self-identification is fine — you don't need a formal diagnosis.
+    </div>
 
-Self-identification is fine — you don't need a formal diagnosis.
+    <div class="cancel-link">
+        <span class="label">Need to cancel?</span><br>
+        <a href="{{cancel_url}}">Click here to cancel your booking</a>
+    </div>
 
-Location: https://maps.app.goo.gl/Wyh2E9CQU7UqpBCs9
-
-To cancel your booking, visit:
-{{cancel_url}}
-
-We look forward to seeing you!
-
-Best regards,
-LAGC Women's Lunch Team
-"""
+    <div class="footer">
+        We look forward to seeing you!<br><br>
+        Best regards,<br>
+        <strong>LAGC Women's Lunch Team</strong><br>
+        London Autism Group Charity
+    </div>
+</body>
+</html>"""
 
 def format_confirmation_message(template, **kwargs):
     """Format the confirmation message with booking details"""
@@ -164,8 +198,8 @@ def format_confirmation_message(template, **kwargs):
         result = result.replace(f'{{{{{key}}}}}', str(value))
     return result
 
-def send_confirmation_email(to_email, subject, message):
-    """Send confirmation email"""
+def send_confirmation_email(to_email, subject, html_message):
+    """Send confirmation email with HTML"""
     if not app.config['ENABLE_EMAIL'] or not app.config['SMTP_USER']:
         print(f"[EMAIL WOULD BE SENT TO {to_email}]")
         print(f"Subject: {subject}")
@@ -174,11 +208,13 @@ def send_confirmation_email(to_email, subject, message):
     try:
         smtp_password = app.config['SMTP_PASSWORD'].replace(' ', '').replace('-', '')
         
-        msg = MIMEMultipart()
+        msg = MIMEMultipart('alternative')
         msg['From'] = app.config['SMTP_FROM']
         msg['To'] = to_email
         msg['Subject'] = subject
-        msg.attach(MIMEText(message, 'plain'))
+        
+        # Attach HTML version
+        msg.attach(MIMEText(html_message, 'html'))
         
         with smtplib.SMTP(app.config['SMTP_HOST'], app.config['SMTP_PORT']) as server:
             server.starttls()
