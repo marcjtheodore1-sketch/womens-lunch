@@ -215,7 +215,7 @@ def send_confirmation_email(to_email, subject, html_message):
         return True
     
     try:
-        smtp_password = app.config['SMTP_PASSWORD'].replace(' ', '').replace('-', '')
+        smtp_password = app.config['SMTP_PASSWORD']
         
         msg = MIMEMultipart('alternative')
         msg['From'] = app.config['SMTP_FROM']
