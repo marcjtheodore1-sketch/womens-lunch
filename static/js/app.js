@@ -17,20 +17,24 @@ let state = {
     additionalInfo: ''
 };
 
-// DOM Elements
-const elements = {
-    firstNameInput: document.getElementById('first-name'),
-    lastNameInput: document.getElementById('last-name'),
-    emailInput: document.getElementById('email'),
-    phoneInput: document.getElementById('phone'),
-    mainCourseInput: document.getElementById('main-course'),
-    drinkInput: document.getElementById('drink'),
-    dietaryInput: document.getElementById('dietary'),
-    additionalInfoInput: document.getElementById('additional-info'),
-    bookingSummary: document.getElementById('booking-summary'),
-    confirmationMessage: document.getElementById('confirmation-message'),
-    myBookingsList: document.getElementById('my-bookings-list')
-};
+// DOM Elements - initialized after DOM is ready
+let elements = {};
+
+function initElements() {
+    elements = {
+        firstNameInput: document.getElementById('first-name'),
+        lastNameInput: document.getElementById('last-name'),
+        emailInput: document.getElementById('email'),
+        phoneInput: document.getElementById('phone'),
+        mainCourseInput: document.getElementById('main-course'),
+        drinkInput: document.getElementById('drink'),
+        dietaryInput: document.getElementById('dietary'),
+        additionalInfoInput: document.getElementById('additional-info'),
+        bookingSummary: document.getElementById('booking-summary'),
+        confirmationMessage: document.getElementById('confirmation-message'),
+        myBookingsList: document.getElementById('my-bookings-list')
+    };
+}
 
 // Steps
 const steps = {
@@ -46,6 +50,7 @@ const steps = {
 // ============================================
 
 document.addEventListener('DOMContentLoaded', () => {
+    initElements();
     loadDates();
 });
 
@@ -310,6 +315,12 @@ async function loadMyBookings() {
         return;
     }
     
+    const listElement = document.getElementById('my-bookings-list');
+    if (!listElement) {
+        alert('Error: Could not find bookings list element');
+        return;
+    }
+    
     try {
         const response = await fetch('/api/my-bookings', {
             method: 'POST',
@@ -322,14 +333,20 @@ async function loadMyBookings() {
         if (response.ok) {
             renderMyBookings(bookings);
         } else {
-            elements.myBookingsList.innerHTML = `<p class="error-text">${bookings.error}</p>`;
+            listElement.innerHTML = `<p class="error-text">${bookings.error || 'Failed to load bookings'}</p>`;
         }
     } catch (error) {
-        elements.myBookingsList.innerHTML = '<p class="error-text">Failed to load bookings</p>';
+        console.error('Error loading bookings:', error);
+        listElement.innerHTML = '<p class="error-text">Failed to load bookings. Please try again.</p>';
     }
 }
 
 function renderMyBookings(bookings) {
+    if (!elements.myBookingsList) {
+        console.error('myBookingsList element not found');
+        return;
+    }
+    
     if (bookings.length === 0) {
         elements.myBookingsList.innerHTML = '<p>No upcoming bookings found</p>';
         return;
