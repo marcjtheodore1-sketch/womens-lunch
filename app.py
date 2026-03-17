@@ -431,7 +431,7 @@ Date: {date_display}
 Order:
 - Main: {main_course}
 - Drink: {drink}
-{f"Dietary: {data.get('dietary_requirements', '')}" if dietary_requirements else ''}
+{f"Dietary: {data.get('dietary_requirements', '')}" if data.get('dietary_requirements') else ''}
 
 First Time: {'Yes' if is_first_time else 'No'}
 Additional Info: {data.get('additional_info', 'None')}
