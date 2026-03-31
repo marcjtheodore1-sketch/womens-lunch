@@ -347,6 +347,11 @@ def cancel_page(token):
     """Cancellation page"""
     return render_template('cancel.html', token=token)
 
+@app.route('/access')
+def access_gate():
+    """Access code gate page"""
+    return render_template('access.html')
+
 # ============================================================================
 # API ENDPOINTS
 # ============================================================================

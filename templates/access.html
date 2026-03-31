@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Access Required - LAGC Autistic Women's Lunch{% endblock %}
+
+{% block content %}
+<div class="access-page">
+    <div class="access-header">
+        <h1>🔒 Access Required</h1>
+        <p class="subtitle">This event is for approved attendees only</p>
+    </div>
+
+    <div class="access-content">
+        <!-- Access Code Form -->
+        <div class="access-form-section" id="access-code-section">
+            <h2>Have an Access Code?</h2>
+            <p>Enter your access code below to view venue details and book your place:</p>
+            
+            <div class="form-group">
+                <label for="access-code">Access Code</label>
+                <input type="text" id="access-code" placeholder="Enter your code" autocomplete="off">
+                <small class="error-text hidden" id="code-error">Invalid access code. Please try again.</small>
+            </div>
+            
+            <button class="btn btn-primary" onclick="checkAccessCode()">Continue →</button>
+        </div>
+
+        <div class="divider">
+            <span>OR</span>
+        </div>
+
+        <!-- Request Access Section -->
+        <div class="request-access-section">
+            <h2>Need an Access Code?</h2>
+            <p>To protect the privacy and safety of our attendees, venue details are only shared with approved participants.</p>
+            
+            <div class="request-info">
+                <p><strong>To request an access code, please email:</strong></p>
+                <a href="mailto:wg.lagc@gmail.com?subject=Access%20Code%20Request%20-%20Women's%20Lunch" class="email-link">
+                    📧 wg.lagc@gmail.com
+                </a>
+                <p class="email-hint">Please include your name and let us know you're interested in attending the Autistic Women's Lunch.</p>
+            </div>
+            
+            <a href="mailto:wg.lagc@gmail.com?subject=Access%20Code%20Request%20-%20Women's%20Lunch" class="btn btn-secondary">
+                Request Access Code
+            </a>
+        </div>
+
+        <!-- Back Link -->
+        <div class="back-link">
+            <a href="/">← Back to Home</a>
+        </div>
+    </div>
+</div>
+
+<script>
+// Access code - change this to your desired code
+const VALID_ACCESS_CODE = 'LAGC2026';
+
+function checkAccessCode() {
+    const codeInput = document.getElementById('access-code');
+    const errorText = document.getElementById('code-error');
+    const enteredCode = codeInput.value.trim().toUpperCase();
+    
+    if (enteredCode === VALID_ACCESS_CODE) {
+        // Store in session that user has access
+        sessionStorage.setItem('womensLunchAccess', 'granted');
+        // Redirect to booking page
+        window.location.href = '/book';
+    } else {
+        // Show error
+        errorText.classList.remove('hidden');
+        codeInput.style.borderColor = '#e53e3e';
+    }
+}
+
+// Allow Enter key to submit
+ document.getElementById('access-code').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        checkAccessCode();
+    }
+});
+</script>
+
+<style>
+.access-page {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+}
+
+.access-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.access-header h1 {
+    color: var(--primary-color);
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.access-form-section,
+.request-access-section {
+    background: #f7fafc;
+    padding: 2rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.access-form-section h2,
+.request-access-section h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    color: var(--text-color);
+}
+
+.divider {
+    text-align: center;
+    margin: 2rem 0;
+    position: relative;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #e2e8f0;
+}
+
+.divider span {
+    background: white;
+    padding: 0 1rem;
+    position: relative;
+    color: var(--text-light);
+    font-size: 0.875rem;
+}
+
+.email-link {
+    display: inline-block;
+    font-size: 1.25rem;
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 600;
+    margin: 0.5rem 0;
+    padding: 0.5rem 1rem;
+    background: #e6fffa;
+    border-radius: 8px;
+}
+
+.email-link:hover {
+    background: #b2f5ea;
+}
+
+.email-hint {
+    font-size: 0.875rem;
+    color: var(--text-light);
+    margin-top: 1rem;
+}
+
+.request-info {
+    margin: 1.5rem 0;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-color);
+}
+
+.back-link {
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.back-link a {
+    color: var(--text-light);
+    text-decoration: none;
+}
+
+.back-link a:hover {
+    color: var(--primary-color);
+}
+
+.hidden {
+    display: none !important;
+}
+</style>
+{% endblock %}
