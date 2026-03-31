@@ -198,6 +198,10 @@ def generate_confirmation_message(name, first_name, date_display, main_course, d
 </body>
 </html>"""
 
+def get_default_confirmation_message():
+    """Return default confirmation message"""
+    return "Your booking has been confirmed. You will receive an email with details."
+
 def format_confirmation_message(template, **kwargs):
     """Format the confirmation message with booking details"""
     result = template
