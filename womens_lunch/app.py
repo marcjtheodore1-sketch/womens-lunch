@@ -532,8 +532,42 @@ def cancel_booking(token):
     if booking.cancelled_at:
         return jsonify({'error': 'This booking has already been cancelled'}), 410
     
+    # Store booking info before cancelling (for email notification)
+    date_display = booking.lunch_date_ref.lunch_date.strftime('%A, %B %d, %Y')
+    first_name = booking.first_name
+    last_name = booking.last_name
+    email = booking.email
+    phone = booking.phone or 'Not provided'
+    main_course = booking.main_course or 'Not specified'
+    drink = booking.drink or 'Not specified'
+    dietary = booking.dietary_requirements or 'None'
+    
     booking.cancelled_at = datetime.utcnow()
     db.session.commit()
+    
+    # Send admin notification about cancellation
+    cancel_message = f"""❌ Booking Cancelled:
+
+Name: {first_name} {last_name}
+Email: {email}
+Phone: {phone}
+Date: {date_display}
+
+Original Order:
+- Main: {main_course}
+- Drink: {drink}
+- Dietary: {dietary}
+
+This booking has been cancelled by the user.
+
+View all bookings at: {request.host_url.rstrip('/')}/admin
+"""
+    
+    send_confirmation_email(
+        'wg.lagc@gmail.com',
+        f"Cancelled Booking: {first_name} {last_name} - {date_display}",
+        cancel_message
+    )
     
     return jsonify({
         'success': True,
