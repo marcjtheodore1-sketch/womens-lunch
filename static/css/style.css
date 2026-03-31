@@ -669,6 +669,7 @@ h2 {
 .date-bookings {
     display: none;
     padding: 0.5rem;
+    overflow-x: auto;
 }
 
 .date-booking-group.expanded .date-bookings {
@@ -676,11 +677,12 @@ h2 {
 }
 
 .booking-row {
-    display: flex;
-    align-items: center;
+    display: grid;
+    grid-template-columns: minmax(140px, 1fr) 2fr minmax(200px, 1.5fr) 90px;
     gap: 1rem;
-    padding: 0.75rem 1rem;
+    padding: 1rem;
     border-bottom: 1px solid var(--border);
+    align-items: start;
 }
 
 .booking-row:last-child {
@@ -688,22 +690,40 @@ h2 {
 }
 
 .booking-info {
-    min-width: 150px;
-}
-
-.booking-user {
-    flex: 1;
+    font-weight: 600;
+    color: var(--text);
 }
 
 .booking-order {
-    min-width: 200px;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    word-break: break-word;
+}
+
+.booking-order small {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--primary-dark);
+    font-size: 0.85rem;
+}
+
+.booking-user {
     font-size: 0.9rem;
     color: var(--text-light);
 }
 
+.booking-user small {
+    display: block;
+    margin-top: 0.25rem;
+    color: var(--text-light);
+}
+
 .booking-actions {
-    min-width: 80px;
     text-align: right;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100%;
 }
 
 /* Archive styling */
@@ -805,9 +825,14 @@ h2 {
     }
 
     .booking-row {
-        flex-direction: column;
-        align-items: flex-start;
+        grid-template-columns: 1fr;
         gap: 0.5rem;
+        padding: 1rem;
+    }
+    
+    .booking-actions {
+        justify-content: flex-start;
+        margin-top: 0.5rem;
     }
 
     .admin-tabs {
