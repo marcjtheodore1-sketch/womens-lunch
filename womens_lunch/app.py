@@ -168,16 +168,15 @@ def generate_confirmation_message(name, first_name, date_display, main_course, d
         </ul>
     </div>
 
-    <div class="order-box">
-        <span class="label">Your Order:</span><br>
-        - Main: {main_course}<br>
-        - Drink: {drink}
-        {dietary_line}
-    </div>
-
     <div class="section">
         <span class="label">What to expect:</span><br>
         This is a relaxed, neuroaffirming space for autistic women to connect over lunch. You can choose a main course and one non-alcoholic drink which London Autism Group Charity will be happy to cover. There is always at least one charity volunteer onsite to welcome you and help you feel comfortable.
+    </div>
+    
+    <div class="section">
+        <span class="label">Ordering:</span><br>
+        You will order and select your meal directly at the pub on the day. The charity will cover your main course and one non-alcoholic drink.
+        {dietary_line}
     </div>
 
     <div class="section">
@@ -372,7 +371,7 @@ def create_booking():
     
     # Validate required fields
     required = ['lunch_date_id', 'first_name', 'last_name', 'email', 
-                'main_course', 'drink', 'is_first_time']
+                'is_first_time']
     for field in required:
         if field not in data:
             return jsonify({'error': f'Missing required field: {field}'}), 400
@@ -381,8 +380,8 @@ def create_booking():
     first_name = data['first_name'].strip()
     last_name = data['last_name'].strip()
     email = data['email'].strip().lower()
-    main_course = data['main_course'].strip()
-    drink = data['drink'].strip()
+    main_course = data.get('main_course', '').strip()
+    drink = data.get('drink', '').strip()
     is_first_time = data['is_first_time']
     
     # Validate names
@@ -392,12 +391,6 @@ def create_booking():
     # Validate email
     if '@' not in email or '.' not in email.split('@')[1]:
         return jsonify({'error': 'Invalid email address'}), 400
-    
-    # Validate menu selections
-    if not main_course:
-        return jsonify({'error': 'Please select a main course'}), 400
-    if not drink:
-        return jsonify({'error': 'Please select a drink'}), 400
     
     # Get lunch date
     lunch_date = LunchDate.query.get(lunch_date_id)
@@ -481,8 +474,8 @@ Phone: {booking.phone or 'Not provided'}
 Date: {date_display}
 
 Order:
-- Main: {main_course}
-- Drink: {drink}
+- Main: {main_course or 'To be decided at the pub'}
+- Drink: {drink or 'To be decided at the pub'}
 {f"Dietary: {data.get('dietary_requirements', '')}" if data.get('dietary_requirements') else ''}
 
 First Time: {'Yes' if is_first_time else 'No'}

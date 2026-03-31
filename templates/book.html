@@ -33,7 +33,7 @@
 
             <div class="menu-section-booking">
                 <h2>🥣 Menu</h2>
-                <p>Please view the menu and decide what you'd like to order when you book:</p>
+                <p>Please feel free to view the menu:</p>
                 <a href="https://cittieofyorkeholborn.co.uk/menus/" target="_blank" class="btn btn-secondary">
                     View Cittie of Yorke Menu →
                 </a>
@@ -80,39 +80,19 @@
                     <label for="phone">Phone Number (optional)</label>
                     <input type="tel" id="phone">
                 </div>
-                <div class="step-actions">
-                    <button class="btn btn-secondary" onclick="resetDate()">← Back</button>
-                    <button class="btn btn-primary" onclick="showMenuStep()">Continue →</button>
-                </div>
-            </div>
-
-            <!-- Step 3: Menu Selection -->
-            <div class="form-step hidden" id="step-menu">
-                <h2>Step 3: Your Order</h2>
-                <p class="hint">Please check the <a href="https://cittieofyorkeholborn.co.uk/menus/" target="_blank">menu</a> and tell us what you'd like.</p>
-                
                 <div class="form-group">
-                    <label for="main-course">Main Course *</label>
-                    <input type="text" id="main-course" placeholder="e.g., Fish and Chips" required>
-                    <small>Please include any modifications (e.g., 'no peas')</small>
-                </div>
-                <div class="form-group">
-                    <label for="drink">Non-Alcoholic Drink *</label>
-                    <input type="text" id="drink" placeholder="e.g., Diet Coke, Orange Juice" required>
-                </div>
-                <div class="form-group">
-                    <label for="dietary">Dietary Requirements or Allergies</label>
+                    <label for="dietary">Dietary Requirements or Allergies (optional)</label>
                     <textarea id="dietary" rows="2" placeholder="e.g., Gluten free, Vegetarian, Nut allergy"></textarea>
                 </div>
                 <div class="step-actions">
-                    <button class="btn btn-secondary" onclick="showDetailsStep()">← Back</button>
+                    <button class="btn btn-secondary" onclick="resetDate()">← Back</button>
                     <button class="btn btn-primary" onclick="showFinalStep()">Continue →</button>
                 </div>
             </div>
 
-            <!-- Step 4: Final Questions -->
+            <!-- Step 3: Final Questions -->
             <div class="form-step hidden" id="step-final">
-                <h2>Step 4: Almost Done</h2>
+                <h2>Step 3: Almost Done</h2>
                 
                 <div class="form-group">
                     <label>Is this your first time attending? *</label>
@@ -136,12 +116,12 @@
                 <div class="booking-summary" id="booking-summary"></div>
                 
                 <div class="step-actions">
-                    <button class="btn btn-secondary" onclick="showMenuStep()">← Back</button>
+                    <button class="btn btn-secondary" onclick="showDetailsStep()">← Back</button>
                     <button class="btn btn-primary" onclick="submitBooking()">Confirm Booking</button>
                 </div>
             </div>
 
-            <!-- Step 5: Confirmation -->
+            <!-- Step 4: Confirmation -->
             <div class="form-step hidden" id="step-confirmation">
                 <h2>✅ Booking Confirmed!</h2>
                 <div class="confirmation-message" id="confirmation-message"></div>
