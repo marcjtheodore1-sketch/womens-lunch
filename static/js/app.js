@@ -64,17 +64,18 @@ async function loadDates() {
         const response = await fetch('/api/dates');
         state.dates = await response.json();
         
-        // Find the first admin-bookable date (for next lunch info)
+        // Get bookable date info from backend
+        const currentBookable = state.dates[0]?.current_bookable;
+        const nextFutureBookable = state.dates[0]?.next_future_bookable;
+        
+        // Find first admin bookable date (to check if it's full)
         const firstAdminBookable = state.dates.find(d => d.admin_bookable);
-        const nextBookable = state.dates.find(d => d.is_bookable && !d.is_full);
+        const currentIsFull = firstAdminBookable && firstAdminBookable.is_full;
         
-        // Get next bookable date info from first date item
-        const nextBookableInfo = state.dates[0]?.next_bookable;
+        // Check if any date is actually bookable (has spots)
+        const hasBookableDate = state.dates.some(d => d.is_bookable);
         
-        // Check if current bookable date is full
-        const currentBookableFull = firstAdminBookable && firstAdminBookable.is_full && firstAdminBookable.admin_bookable;
-        
-        if (!firstAdminBookable) {
+        if (!hasBookableDate && !firstAdminBookable) {
             container.innerHTML = '<p class="notice">Bookings are currently closed. Check back soon for the next lunch date!</p>';
             selectionContainer.innerHTML = '';
             return;
@@ -82,29 +83,49 @@ async function loadDates() {
         
         // Build the info message
         let infoMessage = '';
+        let datesToShow = [];
         
-        if (currentBookableFull) {
-            // Current date is full but still marked as bookable
+        if (currentIsFull) {
+            // Current date is full - show message about next available lunch
+            const nextDate = nextFutureBookable || currentBookable;
             infoMessage = `
                 <div class="notice" style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 1rem; margin-bottom: 1rem; border-radius: 4px;">
                     <strong>🍽️ ${escapeHtml(firstAdminBookable.display)} is fully booked!</strong><br>
-                    This lunch is now full. 
-                    ${nextBookableInfo ? `
+                    This lunch is now full.
+                    ${nextDate ? `
                         <br><br>
-                        📅 <strong>Next lunch:</strong> ${escapeHtml(nextBookableInfo.date)}<br>
-                        Registration will open during the week of <strong>${escapeHtml(nextBookableInfo.week_of)}</strong>. 
+                        📅 <strong>Next lunch:</strong> ${escapeHtml(nextDate.date)}<br>
+                        Registration will open during the week of <strong>${escapeHtml(nextDate.week_of)}</strong>.
                         Please check back then to book your place!
                     ` : ''}
                 </div>
             `;
-        } else if (nextBookable) {
-            infoMessage = '<p>Bookings are open for the next lunch. Future dates are shown for reference.</p>';
+            // Only show the next future bookable date (May 9th), not all dates
+            if (nextFutureBookable) {
+                const nextDateData = state.dates.find(d => d.id === nextFutureBookable.id);
+                if (nextDateData) {
+                    datesToShow = [nextDateData];
+                }
+            }
+        } else if (currentBookable) {
+            // Show current bookable date
+            infoMessage = '<p>Bookings are open for the next lunch.</p>';
+            const currentDateData = state.dates.find(d => d.id === currentBookable.id);
+            if (currentDateData) {
+                datesToShow = [currentDateData];
+            }
         }
         
         container.innerHTML = infoMessage;
         
-        selectionContainer.innerHTML = state.dates.map(date => {
-            const isBookable = date.is_bookable && !date.is_full;
+        // Only show the relevant date(s), not all future dates
+        if (datesToShow.length === 0) {
+            selectionContainer.innerHTML = '<p class="notice">No dates available for booking at this time.</p>';
+            return;
+        }
+        
+        selectionContainer.innerHTML = datesToShow.map(date => {
+            const isBookable = date.is_bookable;
             const isFullButBookable = date.is_full && date.admin_bookable;
             
             let statusClass = '';

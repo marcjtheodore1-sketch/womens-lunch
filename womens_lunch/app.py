@@ -284,7 +284,8 @@ def get_all_future_dates():
     ).order_by(LunchDate.lunch_date).all()
     
     result = []
-    next_bookable_date = None
+    current_bookable = None
+    next_future_bookable = None
     
     for ld in dates:
         # Count current bookings
@@ -295,10 +296,22 @@ def get_all_future_dates():
         
         spots_left = ld.max_attendees - current_bookings
         is_full = spots_left <= 0
+        actually_bookable = ld.is_bookable and not is_full
         
-        # Track the next date that will be bookable (for messaging)
-        if not next_bookable_date and ld.is_bookable:
-            next_bookable_date = {
+        # Track the first date that is actually bookable (has spots)
+        if not current_bookable and actually_bookable:
+            current_bookable = {
+                'id': ld.id,
+                'date': ld.lunch_date.strftime('%A, %B %d, %Y'),
+                'iso_date': ld.lunch_date.isoformat(),
+                'week_of': (ld.lunch_date - timedelta(days=ld.lunch_date.weekday())).strftime('%B %d')
+            }
+        
+        # Track the next future date that will be bookable (for when current is full)
+        # This looks for dates that are admin_bookable but not the first one
+        if current_bookable and ld.is_bookable and not next_future_bookable and ld.id != current_bookable['id']:
+            next_future_bookable = {
+                'id': ld.id,
                 'date': ld.lunch_date.strftime('%A, %B %d, %Y'),
                 'iso_date': ld.lunch_date.isoformat(),
                 'week_of': (ld.lunch_date - timedelta(days=ld.lunch_date.weekday())).strftime('%B %d')
@@ -309,14 +322,17 @@ def get_all_future_dates():
             'date': ld.lunch_date.isoformat(),
             'display': ld.lunch_date.strftime('%A, %B %d, %Y'),
             'admin_bookable': ld.is_bookable,  # Whether admin marked it as bookable
-            'is_bookable': ld.is_bookable and not is_full,  # Actually bookable (has spots)
+            'is_bookable': actually_bookable,  # Actually bookable (has spots)
             'spots_left': spots_left,
             'is_full': is_full
         })
     
-    # Add next bookable date info to the first item (for frontend use)
-    if result and next_bookable_date:
-        result[0]['next_bookable'] = next_bookable_date
+    # Add bookable date info to the first item (for frontend use)
+    if result:
+        if current_bookable:
+            result[0]['current_bookable'] = current_bookable
+        if next_future_bookable:
+            result[0]['next_future_bookable'] = next_future_bookable
     
     return result
 
