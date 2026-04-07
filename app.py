@@ -285,9 +285,10 @@ def get_all_future_dates():
     
     result = []
     current_bookable = None
-    next_future_bookable = None
+    first_admin_bookable = None
+    next_date_after_full = None
     
-    for ld in dates:
+    for i, ld in enumerate(dates):
         # Count current bookings
         current_bookings = Booking.query.filter(
             Booking.lunch_date_id == ld.id,
@@ -298,6 +299,16 @@ def get_all_future_dates():
         is_full = spots_left <= 0
         actually_bookable = ld.is_bookable and not is_full
         
+        # Track the first admin-bookable date (even if full)
+        if not first_admin_bookable and ld.is_bookable:
+            first_admin_bookable = {
+                'id': ld.id,
+                'date': ld.lunch_date.strftime('%A, %B %d, %Y'),
+                'iso_date': ld.lunch_date.isoformat(),
+                'week_of': (ld.lunch_date - timedelta(days=ld.lunch_date.weekday())).strftime('%B %d'),
+                'is_full': is_full
+            }
+        
         # Track the first date that is actually bookable (has spots)
         if not current_bookable and actually_bookable:
             current_bookable = {
@@ -307,10 +318,10 @@ def get_all_future_dates():
                 'week_of': (ld.lunch_date - timedelta(days=ld.lunch_date.weekday())).strftime('%B %d')
             }
         
-        # Track the next future date that will be bookable (for when current is full)
-        # This looks for dates that are admin_bookable but not the first one
-        if current_bookable and ld.is_bookable and not next_future_bookable and ld.id != current_bookable['id']:
-            next_future_bookable = {
+        # Track the next date chronologically after the first admin-bookable one
+        # This is for when the first date is full - we want to show the next one
+        if first_admin_bookable and not next_date_after_full and ld.id != first_admin_bookable['id']:
+            next_date_after_full = {
                 'id': ld.id,
                 'date': ld.lunch_date.strftime('%A, %B %d, %Y'),
                 'iso_date': ld.lunch_date.isoformat(),
@@ -331,8 +342,10 @@ def get_all_future_dates():
     if result:
         if current_bookable:
             result[0]['current_bookable'] = current_bookable
-        if next_future_bookable:
-            result[0]['next_future_bookable'] = next_future_bookable
+        if first_admin_bookable:
+            result[0]['first_admin_bookable'] = first_admin_bookable
+        if next_date_after_full:
+            result[0]['next_date_after_full'] = next_date_after_full
     
     return result
 

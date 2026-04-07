@@ -66,16 +66,16 @@ async function loadDates() {
         
         // Get bookable date info from backend
         const currentBookable = state.dates[0]?.current_bookable;
-        const nextFutureBookable = state.dates[0]?.next_future_bookable;
+        const firstAdminBookable = state.dates[0]?.first_admin_bookable;
+        const nextDateAfterFull = state.dates[0]?.next_date_after_full;
         
-        // Find first admin bookable date (to check if it's full)
-        const firstAdminBookable = state.dates.find(d => d.admin_bookable);
+        // Check if first admin bookable date is full
         const currentIsFull = firstAdminBookable && firstAdminBookable.is_full;
         
         // Check if any date is actually bookable (has spots)
         const hasBookableDate = state.dates.some(d => d.is_bookable);
         
-        if (!hasBookableDate && !firstAdminBookable) {
+        if (!firstAdminBookable) {
             container.innerHTML = '<p class="notice">Bookings are currently closed. Check back soon for the next lunch date!</p>';
             selectionContainer.innerHTML = '';
             return;
@@ -86,11 +86,11 @@ async function loadDates() {
         let datesToShow = [];
         
         if (currentIsFull) {
-            // Current date is full - show message about next available lunch
-            const nextDate = nextFutureBookable || currentBookable;
+            // Current date is full - show message about next lunch (May 9th)
+            const nextDate = nextDateAfterFull;
             infoMessage = `
                 <div class="notice" style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 1rem; margin-bottom: 1rem; border-radius: 4px;">
-                    <strong>🍽️ ${escapeHtml(firstAdminBookable.display)} is fully booked!</strong><br>
+                    <strong>🍽️ ${escapeHtml(firstAdminBookable.date)} is fully booked!</strong><br>
                     This lunch is now full.
                     ${nextDate ? `
                         <br><br>
@@ -100,9 +100,9 @@ async function loadDates() {
                     ` : ''}
                 </div>
             `;
-            // Only show the next future bookable date (May 9th), not all dates
-            if (nextFutureBookable) {
-                const nextDateData = state.dates.find(d => d.id === nextFutureBookable.id);
+            // Show the next date (May 9th) even though it's not yet open for booking
+            if (nextDate) {
+                const nextDateData = state.dates.find(d => d.id === nextDate.id);
                 if (nextDateData) {
                     datesToShow = [nextDateData];
                 }
@@ -127,19 +127,24 @@ async function loadDates() {
         selectionContainer.innerHTML = datesToShow.map(date => {
             const isBookable = date.is_bookable;
             const isFullButBookable = date.is_full && date.admin_bookable;
+            const isFutureDate = !date.admin_bookable; // Not yet opened by admin
             
             let statusClass = '';
             let statusText = '';
+            let hintText = '';
             
             if (isFullButBookable) {
                 statusClass = 'full';
                 statusText = 'Fully Booked';
-            } else if (date.is_bookable) {
+                hintText = 'Check back for next lunch';
+            } else if (isBookable) {
                 statusClass = 'available';
                 statusText = `${date.spots_left} spot${date.spots_left !== 1 ? 's' : ''} left`;
-            } else {
+                hintText = 'Click to select →';
+            } else if (isFutureDate) {
                 statusClass = '';
                 statusText = 'Opening soon';
+                hintText = 'Registration opens the week of the lunch';
             }
             
             return `
@@ -149,8 +154,7 @@ async function loadDates() {
                         <span class="date-main">${escapeHtml(date.display)}</span>
                         <span class="date-status ${statusClass}">${escapeHtml(statusText)}</span>
                     </div>
-                    ${isBookable ? '<span class="select-hint">Click to select →</span>' : ''}
-                    ${isFullButBookable ? '<span class="full-hint">Check back for next lunch</span>' : ''}
+                    ${hintText ? `<span class="select-hint">${hintText}</span>` : ''}
                 </div>
             `;
         }).join('');
