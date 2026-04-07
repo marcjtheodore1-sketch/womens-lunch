@@ -69,11 +69,11 @@ async function loadDates() {
         const firstAdminBookable = state.dates[0]?.first_admin_bookable;
         const nextDateAfterFull = state.dates[0]?.next_date_after_full;
         
-        // Check if first admin bookable date is full
-        const currentIsFull = firstAdminBookable && firstAdminBookable.is_full;
-        
-        // Check if any date is actually bookable (has spots)
+        // Check if any date is actually bookable (has spots AND admin opened it)
         const hasBookableDate = state.dates.some(d => d.is_bookable);
+        
+        // Check if first admin bookable date is full
+        const firstDateIsFull = firstAdminBookable && firstAdminBookable.is_full;
         
         if (!firstAdminBookable) {
             container.innerHTML = '<p class="notice">Bookings are currently closed. Check back soon for the next lunch date!</p>';
@@ -85,8 +85,15 @@ async function loadDates() {
         let infoMessage = '';
         let datesToShow = [];
         
-        if (currentIsFull) {
-            // Current date is full - show message about next lunch (May 9th)
+        if (hasBookableDate && currentBookable) {
+            // There's a date currently open for booking - show it!
+            infoMessage = '<p>Bookings are open for the next lunch.</p>';
+            const currentDateData = state.dates.find(d => d.id === currentBookable.id);
+            if (currentDateData) {
+                datesToShow = [currentDateData];
+            }
+        } else if (firstDateIsFull) {
+            // First date is full and no current bookable date - show "check back later" message
             const nextDate = nextDateAfterFull;
             infoMessage = `
                 <div class="notice" style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 1rem; margin-bottom: 1rem; border-radius: 4px;">
@@ -106,13 +113,6 @@ async function loadDates() {
                 if (nextDateData) {
                     datesToShow = [nextDateData];
                 }
-            }
-        } else if (currentBookable) {
-            // Show current bookable date
-            infoMessage = '<p>Bookings are open for the next lunch.</p>';
-            const currentDateData = state.dates.find(d => d.id === currentBookable.id);
-            if (currentDateData) {
-                datesToShow = [currentDateData];
             }
         }
         
