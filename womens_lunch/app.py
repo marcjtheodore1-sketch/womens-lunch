@@ -284,6 +284,8 @@ def get_all_future_dates():
     ).order_by(LunchDate.lunch_date).all()
     
     result = []
+    next_bookable_date = None
+    
     for ld in dates:
         # Count current bookings
         current_bookings = Booking.query.filter(
@@ -292,15 +294,29 @@ def get_all_future_dates():
         ).count()
         
         spots_left = ld.max_attendees - current_bookings
+        is_full = spots_left <= 0
+        
+        # Track the next date that will be bookable (for messaging)
+        if not next_bookable_date and ld.is_bookable:
+            next_bookable_date = {
+                'date': ld.lunch_date.strftime('%A, %B %d, %Y'),
+                'iso_date': ld.lunch_date.isoformat(),
+                'week_of': (ld.lunch_date - timedelta(days=ld.lunch_date.weekday())).strftime('%B %d')
+            }
         
         result.append({
             'id': ld.id,
             'date': ld.lunch_date.isoformat(),
             'display': ld.lunch_date.strftime('%A, %B %d, %Y'),
-            'is_bookable': ld.is_bookable and spots_left > 0,
+            'admin_bookable': ld.is_bookable,  # Whether admin marked it as bookable
+            'is_bookable': ld.is_bookable and not is_full,  # Actually bookable (has spots)
             'spots_left': spots_left,
-            'is_full': spots_left <= 0
+            'is_full': is_full
         })
+    
+    # Add next bookable date info to the first item (for frontend use)
+    if result and next_bookable_date:
+        result[0]['next_bookable'] = next_bookable_date
     
     return result
 

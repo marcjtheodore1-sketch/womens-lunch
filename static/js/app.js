@@ -13,6 +13,7 @@ let state = {
     mainCourse: '',
     drink: '',
     dietary: '',
+    meetingPreference: 'church',
     isFirstTime: true,
     additionalInfo: ''
 };
@@ -63,30 +64,72 @@ async function loadDates() {
         const response = await fetch('/api/dates');
         state.dates = await response.json();
         
-        // Show info about booking system
-        const bookableDates = state.dates.filter(d => d.is_bookable);
-        if (bookableDates.length === 0) {
+        // Find the first admin-bookable date (for next lunch info)
+        const firstAdminBookable = state.dates.find(d => d.admin_bookable);
+        const nextBookable = state.dates.find(d => d.is_bookable && !d.is_full);
+        
+        // Get next bookable date info from first date item
+        const nextBookableInfo = state.dates[0]?.next_bookable;
+        
+        // Check if current bookable date is full
+        const currentBookableFull = firstAdminBookable && firstAdminBookable.is_full && firstAdminBookable.admin_bookable;
+        
+        if (!firstAdminBookable) {
             container.innerHTML = '<p class="notice">Bookings are currently closed. Check back soon for the next lunch date!</p>';
             selectionContainer.innerHTML = '';
             return;
         }
         
-        // Show all dates with status
-        container.innerHTML = '<p>Bookings are open for the next lunch. Future dates are shown for reference.</p>';
+        // Build the info message
+        let infoMessage = '';
+        
+        if (currentBookableFull) {
+            // Current date is full but still marked as bookable
+            infoMessage = `
+                <div class="notice" style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 1rem; margin-bottom: 1rem; border-radius: 4px;">
+                    <strong>🍽️ ${escapeHtml(firstAdminBookable.display)} is fully booked!</strong><br>
+                    This lunch is now full. 
+                    ${nextBookableInfo ? `
+                        <br><br>
+                        📅 <strong>Next lunch:</strong> ${escapeHtml(nextBookableInfo.date)}<br>
+                        Registration will open during the week of <strong>${escapeHtml(nextBookableInfo.week_of)}</strong>. 
+                        Please check back then to book your place!
+                    ` : ''}
+                </div>
+            `;
+        } else if (nextBookable) {
+            infoMessage = '<p>Bookings are open for the next lunch. Future dates are shown for reference.</p>';
+        }
+        
+        container.innerHTML = infoMessage;
         
         selectionContainer.innerHTML = state.dates.map(date => {
             const isBookable = date.is_bookable && !date.is_full;
-            const statusClass = date.is_full ? 'full' : (date.is_bookable ? 'available' : '');
-            const statusText = date.is_full ? 'Fully Booked' : (date.is_bookable ? `${date.spots_left} spots left` : 'Opening soon');
+            const isFullButBookable = date.is_full && date.admin_bookable;
+            
+            let statusClass = '';
+            let statusText = '';
+            
+            if (isFullButBookable) {
+                statusClass = 'full';
+                statusText = 'Fully Booked';
+            } else if (date.is_bookable) {
+                statusClass = 'available';
+                statusText = `${date.spots_left} spot${date.spots_left !== 1 ? 's' : ''} left`;
+            } else {
+                statusClass = '';
+                statusText = 'Opening soon';
+            }
             
             return `
-                <div class="date-card ${isBookable ? '' : 'disabled'}" 
+                <div class="date-card ${isBookable ? '' : 'disabled'} ${isFullButBookable ? 'full-booked' : ''}" 
                      ${isBookable ? `onclick="selectDate(${date.id})"` : ''}>
                     <div class="date-info">
                         <span class="date-main">${escapeHtml(date.display)}</span>
                         <span class="date-status ${statusClass}">${escapeHtml(statusText)}</span>
                     </div>
                     ${isBookable ? '<span class="select-hint">Click to select →</span>' : ''}
+                    ${isFullButBookable ? '<span class="full-hint">Check back for next lunch</span>' : ''}
                 </div>
             `;
         }).join('');
@@ -146,6 +189,15 @@ function showFinalStep() {
     if (!email || !email.includes('@')) {
         alert('Please enter a valid email address');
         return;
+    }
+    
+    // Get meeting preference
+    const meetingRadios = document.getElementsByName('meeting-preference');
+    for (const radio of meetingRadios) {
+        if (radio.checked) {
+            state.meetingPreference = radio.value;
+            break;
+        }
     }
     
     // Save to state
@@ -218,6 +270,7 @@ async function submitBooking() {
         main_course: '',
         drink: '',
         dietary_requirements: state.dietary,
+        meeting_preference: state.meetingPreference,
         is_first_time: state.isFirstTime,
         additional_info: state.additionalInfo
     };
@@ -251,6 +304,7 @@ function resetBooking() {
     state.mainCourse = '';
     state.drink = '';
     state.dietary = '';
+    state.meetingPreference = 'church';
     state.isFirstTime = true;
     state.additionalInfo = '';
     
