@@ -59,6 +59,9 @@ class Booking(db.Model):
     drink = db.Column(db.String(200), nullable=False)
     dietary_requirements = db.Column(db.Text, nullable=True)
     
+    # Meeting preference
+    meeting_preference = db.Column(db.String(50), nullable=True)
+    
     # Additional info
     is_first_time = db.Column(db.Boolean, default=True)
     additional_info = db.Column(db.Text, nullable=True)
@@ -426,6 +429,7 @@ def create_booking():
     
     # Create booking
     cancel_token = secrets.token_urlsafe(32)
+    meeting_preference = data.get('meeting_preference', 'church')
     booking = Booking(
         lunch_date_id=lunch_date_id,
         first_name=first_name,
@@ -435,6 +439,7 @@ def create_booking():
         main_course=main_course,
         drink=drink,
         dietary_requirements=data.get('dietary_requirements', '').strip(),
+        meeting_preference=meeting_preference,
         is_first_time=is_first_time,
         additional_info=data.get('additional_info', '').strip(),
         cancel_token=cancel_token
@@ -477,6 +482,8 @@ Order:
 - Main: {main_course or 'To be decided at the pub'}
 - Drink: {drink or 'To be decided at the pub'}
 {f"Dietary: {data.get('dietary_requirements', '')}" if data.get('dietary_requirements') else ''}
+
+Meeting Preference: {'Meet at Holy Sepulchre Church at 11:45 AM' if meeting_preference == 'church' else 'Meet at the pub at 12:00 PM'}
 
 First Time: {'Yes' if is_first_time else 'No'}
 Additional Info: {data.get('additional_info', 'None')}
@@ -541,6 +548,7 @@ def cancel_booking(token):
     main_course = booking.main_course or 'Not specified'
     drink = booking.drink or 'Not specified'
     dietary = booking.dietary_requirements or 'None'
+    meeting_pref = booking.meeting_preference or 'church'
     
     booking.cancelled_at = datetime.utcnow()
     db.session.commit()
@@ -557,6 +565,8 @@ Original Order:
 - Main: {main_course}
 - Drink: {drink}
 - Dietary: {dietary}
+
+Meeting Preference: {'Meet at Holy Sepulchre Church at 11:45 AM' if meeting_pref == 'church' else 'Meet at the pub at 12:00 PM'}
 
 This booking has been cancelled by the user.
 
@@ -684,6 +694,7 @@ def admin_get_bookings():
             'main_course': booking.main_course,
             'drink': booking.drink,
             'dietary_requirements': booking.dietary_requirements,
+            'meeting_preference': booking.meeting_preference,
             'is_first_time': booking.is_first_time,
             'additional_info': booking.additional_info
         })
@@ -712,6 +723,7 @@ def admin_get_bookings_archive():
             'main_course': booking.main_course,
             'drink': booking.drink,
             'dietary_requirements': booking.dietary_requirements,
+            'meeting_preference': booking.meeting_preference,
             'is_first_time': booking.is_first_time,
             'additional_info': booking.additional_info
         })

@@ -13,6 +13,7 @@ let state = {
     mainCourse: '',
     drink: '',
     dietary: '',
+    meetingPreference: 'church',
     isFirstTime: true,
     additionalInfo: ''
 };
@@ -148,6 +149,15 @@ function showFinalStep() {
         return;
     }
     
+    // Get meeting preference
+    const meetingRadios = document.getElementsByName('meeting-preference');
+    for (const radio of meetingRadios) {
+        if (radio.checked) {
+            state.meetingPreference = radio.value;
+            break;
+        }
+    }
+    
     // Save to state
     state.firstName = firstName;
     state.lastName = lastName;
@@ -218,6 +228,7 @@ async function submitBooking() {
         main_course: '',
         drink: '',
         dietary_requirements: state.dietary,
+        meeting_preference: state.meetingPreference,
         is_first_time: state.isFirstTime,
         additional_info: state.additionalInfo
     };
@@ -251,6 +262,7 @@ function resetBooking() {
     state.mainCourse = '';
     state.drink = '';
     state.dietary = '';
+    state.meetingPreference = 'church';
     state.isFirstTime = true;
     state.additionalInfo = '';
     

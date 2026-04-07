@@ -172,6 +172,7 @@ function renderBookingsByDate(bookings, containerId, isArchive) {
                                 ${escapeHtml(booking.email)}
                                 ${booking.phone ? `<small>📞 ${escapeHtml(booking.phone)}</small>` : ''}
                                 ${booking.is_first_time ? '<small>⭐ First time attending</small>' : ''}
+                                <small>${booking.meeting_preference === 'church' ? '🏛️ Meet at church (11:45 AM)' : '🍺 Meet at pub (12:00 PM)'}</small>
                             </div>
                             <div class="booking-actions">
                                 <button class="btn btn-small btn-danger" onclick="deleteBooking(${booking.id}, '${containerId}')">Delete</button>

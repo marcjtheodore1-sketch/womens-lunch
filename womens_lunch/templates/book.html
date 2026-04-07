@@ -84,6 +84,21 @@
                     <label for="dietary">Dietary Requirements or Allergies (optional)</label>
                     <textarea id="dietary" rows="2" placeholder="e.g., Gluten free, Vegetarian, Nut allergy"></textarea>
                 </div>
+                
+                <div class="form-group">
+                    <label>How would you prefer to meet us? *</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="meeting-preference" value="church" checked>
+                            Meet a volunteer at Holy Sepulchre Church at 11:45 AM (we'll walk together to the pub)
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="meeting-preference" value="pub">
+                            Meet directly at the pub at 12:00 PM
+                        </label>
+                    </div>
+                </div>
+                
                 <div class="step-actions">
                     <button class="btn btn-secondary" onclick="resetDate()">← Back</button>
                     <button class="btn btn-primary" onclick="showFinalStep()">Continue →</button>
