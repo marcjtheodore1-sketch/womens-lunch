@@ -4,13 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}LAGC Autistic Women's Lunch{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <nav class="navbar">
         <div class="nav-brand">
             <a href="/">🍽️ LAGC Autistic Women's Lunch</a>
-            <img src="{{ url_for('static', filename='images/charity_logo.jpg') }}" alt="London Autism Group Charity Logo" class="nav-logo">
+            <a href="https://londonautismgroupcharity.org" target="_blank" rel="noopener noreferrer">
+                <img src="{{ url_for('static', filename='images/charity_logo.jpg') }}" alt="London Autism Group Charity Logo" class="nav-logo">
+            </a>
         </div>
         <div class="nav-links">
             <a href="/" class="nav-link">Home</a>
@@ -27,8 +32,10 @@
     </main>
 
     <footer class="footer">
-        <img src="{{ url_for('static', filename='images/charity_logo.jpg') }}" alt="London Autism Group Charity Logo" class="footer-logo">
-        <p>London Autism Group Charity - Autistic Women's Lunch</p>
+        <a href="https://londonautismgroupcharity.org" target="_blank" rel="noopener noreferrer">
+            <img src="{{ url_for('static', filename='images/charity_logo.jpg') }}" alt="London Autism Group Charity Logo" class="footer-logo">
+        </a>
+        <p><a href="https://londonautismgroupcharity.org" target="_blank" rel="noopener noreferrer">London Autism Group Charity</a> - Autistic Women's Lunch</p>
     </footer>
 
     {% block scripts %}{% endblock %}
