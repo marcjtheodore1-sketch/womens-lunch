@@ -1199,4 +1199,8 @@ p {
     .landing-logo {
         width: 240px;
     }
+
+    .nav-logo {
+        display: none;
+    }
 }
