@@ -1115,9 +1115,9 @@ p {
 
 .landing-logo {
     display: block;
-    width: 182px;
+    width: 380px;
     height: auto;
-    margin: 0 auto 1.25rem;
+    margin: 0 auto 1.5rem;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow);
 }
@@ -1194,5 +1194,9 @@ p {
     .venue-section-booking h2,
     .menu-section-booking h2 {
         font-size: 1.25rem;
+    }
+
+    .landing-logo {
+        width: 240px;
     }
 }
