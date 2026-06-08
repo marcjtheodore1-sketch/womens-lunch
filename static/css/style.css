@@ -38,6 +38,8 @@ html {
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: var(--bg);
+    background-image: linear-gradient(180deg, #f0fff4 0%, #ffffff 55%, #f0fff4 100%);
+    background-attachment: fixed;
     color: var(--text);
     line-height: 1.65;
     min-height: 100vh;
@@ -281,8 +283,48 @@ p {
 }
 
 .landing-header h1 {
-    color: #276749;
-    font-size: 3rem;
+    font-size: 3.6rem; /* ~20% larger than the previous 3rem */
+    font-weight: 700;
+    color: #276749; /* fallback for browsers without background-clip support */
+    background: linear-gradient(
+        110deg,
+        #276749 0%,
+        #48bb78 35%,
+        #68d391 50%,
+        #48bb78 65%,
+        #276749 100%
+    );
+    background-size: 240% 240%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation:
+        headerRadiate 9s ease-in-out infinite,
+        headerGlow 4.5s ease-in-out infinite;
+}
+
+/* Gentle swirling / radiating fill — only the gradient moves; the text stays put */
+@keyframes headerRadiate {
+    0%   { background-position: 0% 50%; }
+    25%  { background-position: 50% 0%; }
+    50%  { background-position: 100% 50%; }
+    75%  { background-position: 50% 100%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Soft radiant glow that gently breathes in and out */
+@keyframes headerGlow {
+    0%, 100% { filter: drop-shadow(0 0 4px rgba(72, 187, 120, 0.18)); }
+    50%      { filter: drop-shadow(0 0 11px rgba(72, 187, 120, 0.34)); }
+}
+
+/* Respect users who prefer reduced motion (important for a neuroaffirming space) */
+@media (prefers-reduced-motion: reduce) {
+    .landing-header h1 {
+        animation: none;
+        background-position: 50% 50%;
+        filter: drop-shadow(0 0 5px rgba(72, 187, 120, 0.25));
+    }
 }
 
 .landing-content {
@@ -307,6 +349,12 @@ p {
     margin: 2rem 0;
     border-radius: var(--radius);
     box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.initiative-description:hover {
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
 }
 
 .initiative-description p {
@@ -324,6 +372,12 @@ p {
     padding: 2rem;
     margin-bottom: 2rem;
     box-shadow: var(--shadow);
+    transition: var(--transition);
+}
+
+.lunch-details:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
 }
 
 .lunch-details h2 {
@@ -417,6 +471,11 @@ p {
     border: 2px solid var(--primary);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
+    transition: var(--transition);
+}
+
+.cta-section:hover {
+    box-shadow: 0 12px 28px -6px rgba(72, 187, 120, 0.28);
 }
 
 .cta-hint {
@@ -1120,6 +1179,12 @@ p {
     margin: 0 auto 1.5rem;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow);
+    transition: var(--transition);
+}
+
+.landing-logo:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-lg);
 }
 
 /* ============================================
@@ -1152,7 +1217,7 @@ p {
     }
 
     .landing-header h1 {
-        font-size: 2.25rem;
+        font-size: 2.7rem; /* ~20% larger than the previous 2.25rem */
     }
 
     .form-step {
