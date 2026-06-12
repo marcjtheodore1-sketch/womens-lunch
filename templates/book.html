@@ -79,6 +79,7 @@
                 <div class="form-group">
                     <label for="email">Email Address *</label>
                     <input type="email" id="email" required>
+                    <small style="display:block; margin-top:0.4rem; color:var(--text-light);">We'll email your confirmation here. If it doesn't arrive, please check your spam/junk folder.</small>
                 </div>
                 <div class="form-group">
                     <label for="phone">Phone Number (optional)</label>
@@ -143,6 +144,10 @@
             <!-- Step 4: Confirmation -->
             <div class="form-step hidden" id="step-confirmation">
                 <h2>✅ Booking Confirmed!</h2>
+                <div style="background:#fff3cd; border-left:4px solid #f6ad55; padding:1rem 1.25rem; border-radius:var(--radius); margin-bottom:1.5rem; color:#856404;">
+                    <strong>📧 Please check your spam or junk folder.</strong><br>
+                    Your confirmation email is on its way from <strong>wg.lagc@gmail.com</strong>. It sometimes lands in spam, so please look there too and mark it as "Not spam" so you don't miss any updates.
+                </div>
                 <div class="confirmation-message" id="confirmation-message"></div>
                 <div class="step-actions">
                     <button class="btn btn-primary" onclick="resetBooking()">Make Another Booking</button>
