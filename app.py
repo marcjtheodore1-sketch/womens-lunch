@@ -29,7 +29,7 @@ app.config['SMTP_FROM'] = 'wg.lagc@gmail.com'
 app.config['ENABLE_EMAIL'] = True
 
 # Admin password
-app.config['ADMIN_PASSWORD'] = os.environ.get('ADMIN_PASSWORD', 'womenslunch')
+app.config['ADMIN_PASSWORD'] = os.environ.get('ADMIN_PASSWORD', 'Yesterday')
 
 db = SQLAlchemy(app)
 
