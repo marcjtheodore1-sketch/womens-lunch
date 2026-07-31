@@ -193,6 +193,33 @@ function renderBookingsByDate(bookings, containerId, isArchive) {
     }).join('');
 }
 
+async function sendSummaryNow(button) {
+    if (!confirm('Send the attendee summary for the next lunch to wg.lagc@gmail.com now?')) {
+        return;
+    }
+
+    const originalText = button.textContent;
+    button.disabled = true;
+    button.textContent = 'Sending...';
+
+    try {
+        const response = await fetch('/api/admin/send-summary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        });
+        const result = await response.json();
+        alert(response.ok && result.success
+            ? `✅ ${result.message}`
+            : `⚠️ ${result.error || result.message || 'Could not send the summary'}`);
+    } catch (error) {
+        alert('Network error - the summary was not sent.');
+    } finally {
+        button.disabled = false;
+        button.textContent = originalText;
+    }
+}
+
 function toggleDateGroup(header) {
     const group = header.parentElement;
     const isExpanded = group.classList.contains('expanded');

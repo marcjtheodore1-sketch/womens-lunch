@@ -918,6 +918,20 @@ p {
     margin-top: 1rem;
 }
 
+.summary-send-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    border-left: 4px solid var(--primary);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.5rem;
+}
+
 .date-booking-group {
     background: var(--card-bg);
     border: 1.5px solid var(--border);

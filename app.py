@@ -10,6 +10,8 @@ from functools import wraps
 import secrets
 import os
 import smtplib
+import threading
+import time
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -30,6 +32,15 @@ app.config['ENABLE_EMAIL'] = True
 
 # Admin password
 app.config['ADMIN_PASSWORD'] = os.environ.get('ADMIN_PASSWORD', 'Nightingale')
+
+# Pre-lunch summary email: lunch starts at 12:00, so 3 hours before is 09:00.
+# Times are UK local (the server clock may be UTC), and the summary will still
+# be sent later in the window if the app was not running at 09:00.
+LUNCH_START_HOUR = 12
+SUMMARY_HOURS_BEFORE = 3
+SUMMARY_SEND_HOUR = LUNCH_START_HOUR - SUMMARY_HOURS_BEFORE  # 09:00
+SUMMARY_LATEST_HOUR = LUNCH_START_HOUR                       # give up at 12:00
+SUMMARY_CHECK_SECONDS = 600  # re-check every 10 minutes
 
 db = SQLAlchemy(app)
 
@@ -380,16 +391,26 @@ def generate_lunch_summary_html(lunch_date, bookings):
 </body>
 </html>"""
 
+def uk_now():
+    """Current UK local time. The server clock is usually UTC, and the UK
+    shifts to BST in summer, so the summary would otherwise drift by an hour."""
+    try:
+        from zoneinfo import ZoneInfo
+        return datetime.now(ZoneInfo('Europe/London'))
+    except Exception:
+        return datetime.now()
+
 def send_lunch_summary(target_date=None, force=False):
     """Email the volunteer inbox a summary of everyone booked for a lunch.
 
     Defaults to today's lunch. Does nothing if there is no lunch on that date.
-    A record of each send is kept so re-running cannot send duplicates,
-    unless force=True.
+    The send is recorded *before* the email goes out, so if several workers
+    check at the same moment only one of them sends. Pass force=True to
+    override that guard.
     Returns a short status string describing what happened.
     """
     if target_date is None:
-        target_date = datetime.now().date()
+        target_date = uk_now().date()
 
     lunch_date = LunchDate.query.filter_by(lunch_date=target_date).first()
     if not lunch_date:
@@ -398,6 +419,10 @@ def send_lunch_summary(target_date=None, force=False):
     sent_key = f"summary_sent_{target_date.isoformat()}"
     if not force and get_setting(sent_key):
         return f"Summary for {target_date} already sent - skipping"
+
+    # Claim the send before doing it, so a second worker checking at the same
+    # time sees it as already taken rather than sending a duplicate.
+    set_setting(sent_key, uk_now().isoformat())
 
     bookings = Booking.query.filter(
         Booking.lunch_date_id == lunch_date.id,
@@ -414,10 +439,56 @@ def send_lunch_summary(target_date=None, force=False):
     )
 
     if not ok:
-        return f"FAILED to send summary for {target_date}"
+        # Release the claim so the next check can try again
+        setting = Setting.query.filter_by(key=sent_key).first()
+        if setting:
+            db.session.delete(setting)
+            db.session.commit()
+        return f"FAILED to send summary for {target_date} - will retry"
 
-    set_setting(sent_key, datetime.utcnow().isoformat())
     return f"Summary sent for {target_date} ({len(bookings)} bookings)"
+
+def send_summary_if_due():
+    """Send today's summary if we are inside the sending window.
+
+    Safe to call as often as you like: it only acts on lunch days, only
+    between the send hour and the start of the lunch, and only once.
+    """
+    now = uk_now()
+    if not (SUMMARY_SEND_HOUR <= now.hour < SUMMARY_LATEST_HOUR):
+        return None
+
+    sent_key = f"summary_sent_{now.date().isoformat()}"
+    if get_setting(sent_key):
+        return None
+
+    result = send_lunch_summary(target_date=now.date())
+    if result and 'nothing sent' not in result:
+        print(f"[SUMMARY] {result}")
+    return result
+
+def _summary_scheduler_loop():
+    """Background check so the summary sends without an external scheduler."""
+    while True:
+        try:
+            with app.app_context():
+                send_summary_if_due()
+        except Exception as e:
+            print(f"[SUMMARY] Scheduler check failed: {e}")
+        time.sleep(SUMMARY_CHECK_SECONDS)
+
+def start_summary_scheduler():
+    """Start the background scheduler once per process."""
+    if getattr(app, '_summary_scheduler_started', False):
+        return
+    # Avoid a second thread in Flask's debug reloader parent process
+    if app.debug and not os.environ.get('WERKZEUG_RUN_MAIN'):
+        return
+    app._summary_scheduler_started = True
+    thread = threading.Thread(target=_summary_scheduler_loop, daemon=True)
+    thread.start()
+    print("[SUMMARY] Background scheduler started "
+          f"(sends at {SUMMARY_SEND_HOUR:02d}:00 UK time on lunch days)")
 
 def ensure_schema():
     """Add any columns missing from an existing database.
@@ -563,6 +634,24 @@ def get_all_future_dates():
 # ============================================================================
 # ROUTES
 # ============================================================================
+
+_last_summary_check = [0.0]
+_summary_check_lock = threading.Lock()
+
+@app.before_request
+def _summary_safety_net():
+    """Second chance to send the summary, in case the background thread is not
+    running (hosting platforms recycle worker processes). Runs at most once
+    every few minutes and never blocks the response for long."""
+    now = time.time()
+    with _summary_check_lock:
+        if now - _last_summary_check[0] < SUMMARY_CHECK_SECONDS:
+            return
+        _last_summary_check[0] = now
+    try:
+        send_summary_if_due()
+    except Exception as e:
+        print(f"[SUMMARY] Safety-net check failed: {e}")
 
 @app.route('/')
 def landing():
@@ -1068,6 +1157,30 @@ def admin_update_settings():
     
     return jsonify({'success': True})
 
+@app.route('/api/admin/send-summary', methods=['POST'])
+@admin_required
+def admin_send_summary():
+    """Send the attendee summary on demand (also used to test the format)."""
+    data = request.get_json(silent=True) or {}
+
+    target_date = None
+    if data.get('date'):
+        try:
+            target_date = datetime.strptime(data['date'], '%Y-%m-%d').date()
+        except ValueError:
+            return jsonify({'error': 'Invalid date - expected YYYY-MM-DD'}), 400
+    else:
+        # Default to the next upcoming lunch so the button is useful any day
+        next_date = LunchDate.query.filter(
+            LunchDate.lunch_date >= uk_now().date()
+        ).order_by(LunchDate.lunch_date).first()
+        if not next_date:
+            return jsonify({'error': 'No upcoming lunch dates found'}), 404
+        target_date = next_date.lunch_date
+
+    result = send_lunch_summary(target_date=target_date, force=True)
+    return jsonify({'success': 'FAILED' not in result, 'message': result})
+
 @app.route('/api/admin/bookings/<int:booking_id>', methods=['DELETE'])
 @admin_required
 def admin_delete_booking(booking_id):
@@ -1100,6 +1213,7 @@ def initialise_database():
         print(f"[ERROR] Database initialisation failed: {e}")
 
 initialise_database()
+start_summary_scheduler()
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5002)
