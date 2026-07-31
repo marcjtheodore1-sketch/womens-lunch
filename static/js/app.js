@@ -15,7 +15,13 @@ let state = {
     dietary: '',
     meetingPreference: 'church',
     isFirstTime: true,
-    additionalInfo: ''
+    additionalInfo: '',
+    bringingCompanion: false,
+    companionName: '',
+    companionAgency: '',
+    companionMobile: '',
+    companionOtherNames: '',
+    supervisionAck: false
 };
 
 // DOM Elements - initialized after DOM is ready
@@ -29,6 +35,12 @@ function initElements() {
         phoneInput: document.getElementById('phone'),
         dietaryInput: document.getElementById('dietary'),
         additionalInfoInput: document.getElementById('additional-info'),
+        companionDetails: document.getElementById('companion-details'),
+        companionNameInput: document.getElementById('companion-name'),
+        companionAgencyInput: document.getElementById('companion-agency'),
+        companionMobileInput: document.getElementById('companion-mobile'),
+        companionOtherNamesInput: document.getElementById('companion-other-names'),
+        supervisionAckInput: document.getElementById('supervision-ack'),
         bookingSummary: document.getElementById('booking-summary'),
         confirmationMessage: document.getElementById('confirmation-message'),
         myBookingsList: document.getElementById('my-bookings-list')
@@ -274,6 +286,20 @@ function showDetailsStepFromFinal() {
 // BOOKING SUBMISSION
 // ============================================
 
+function isBringingCompanion() {
+    const radios = document.getElementsByName('bringing-companion');
+    for (const radio of radios) {
+        if (radio.checked) return radio.value === 'yes';
+    }
+    return false;
+}
+
+function toggleCompanionFields() {
+    const details = document.getElementById('companion-details');
+    if (!details) return;
+    details.classList.toggle('hidden', !isBringingCompanion());
+}
+
 async function submitBooking() {
     // Get first time status
     const firstTimeRadios = document.getElementsByName('first-time');
@@ -283,9 +309,43 @@ async function submitBooking() {
             break;
         }
     }
-    
+
+    // Safeguarding - carer / support worker details
+    state.bringingCompanion = isBringingCompanion();
+
+    if (state.bringingCompanion) {
+        state.companionName = elements.companionNameInput.value.trim();
+        state.companionAgency = elements.companionAgencyInput.value.trim();
+        state.companionMobile = elements.companionMobileInput.value.trim();
+        state.companionOtherNames = elements.companionOtherNamesInput.value.trim();
+        state.supervisionAck = elements.supervisionAckInput.checked;
+
+        if (!state.companionName) {
+            alert('Please enter the full name of the carer or support worker attending with you');
+            return;
+        }
+        if (!state.companionAgency) {
+            alert("Please enter the agency or organisation name (or 'Family' / 'Independent')");
+            return;
+        }
+        if (!state.companionMobile) {
+            alert('Please enter a mobile number for the carer or support worker');
+            return;
+        }
+        if (!state.supervisionAck) {
+            alert('Please confirm the supervision responsibility statement before booking');
+            return;
+        }
+    } else {
+        state.companionName = '';
+        state.companionAgency = '';
+        state.companionMobile = '';
+        state.companionOtherNames = '';
+        state.supervisionAck = false;
+    }
+
     state.additionalInfo = elements.additionalInfoInput.value.trim();
-    
+
     const bookingData = {
         lunch_date_id: state.selectedDate.id,
         first_name: state.firstName,
@@ -297,7 +357,13 @@ async function submitBooking() {
         dietary_requirements: state.dietary,
         meeting_preference: state.meetingPreference,
         is_first_time: state.isFirstTime,
-        additional_info: state.additionalInfo
+        additional_info: state.additionalInfo,
+        bringing_companion: state.bringingCompanion,
+        companion_name: state.companionName,
+        companion_agency: state.companionAgency,
+        companion_mobile: state.companionMobile,
+        companion_other_names: state.companionOtherNames,
+        supervision_ack: state.supervisionAck
     };
     
     try {
@@ -332,7 +398,13 @@ function resetBooking() {
     state.meetingPreference = 'church';
     state.isFirstTime = true;
     state.additionalInfo = '';
-    
+    state.bringingCompanion = false;
+    state.companionName = '';
+    state.companionAgency = '';
+    state.companionMobile = '';
+    state.companionOtherNames = '';
+    state.supervisionAck = false;
+
     elements.firstNameInput.value = '';
     elements.lastNameInput.value = '';
     elements.emailInput.value = '';
@@ -340,6 +412,12 @@ function resetBooking() {
     elements.dietaryInput.value = '';
     elements.additionalInfoInput.value = '';
     
+    elements.companionNameInput.value = '';
+    elements.companionAgencyInput.value = '';
+    elements.companionMobileInput.value = '';
+    elements.companionOtherNamesInput.value = '';
+    elements.supervisionAckInput.checked = false;
+
     // Reset radio buttons
     const firstTimeRadios = document.getElementsByName('first-time');
     for (const radio of firstTimeRadios) {
@@ -347,7 +425,13 @@ function resetBooking() {
             radio.checked = true;
         }
     }
-    
+
+    const companionRadios = document.getElementsByName('bringing-companion');
+    for (const radio of companionRadios) {
+        radio.checked = radio.value === 'no';
+    }
+    toggleCompanionFields();
+
     showStep('date');
     loadDates();
 }

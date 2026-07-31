@@ -173,6 +173,14 @@ function renderBookingsByDate(bookings, containerId, isArchive) {
                                 ${booking.phone ? `<small>📞 ${escapeHtml(booking.phone)}</small>` : ''}
                                 ${booking.is_first_time ? '<small>⭐ First time attending</small>' : ''}
                                 <small>${booking.meeting_preference === 'church' ? '🏛️ Meet at church (11:45 AM)' : '🍺 Meet at pub (12:00 PM)'}</small>
+                                ${booking.bringing_companion ? `
+                                <span class="companion-flag${booking.supervision_ack ? '' : ' missing-ack'}">
+                                    <strong>🧑‍🤝‍🧑 Attending with a carer / support worker</strong><br>
+                                    ${escapeHtml(booking.companion_name || 'Name not given')}${booking.companion_agency ? ' — ' + escapeHtml(booking.companion_agency) : ''}<br>
+                                    📱 ${escapeHtml(booking.companion_mobile || 'No number given')}
+                                    ${booking.companion_other_names ? '<br>Also attending: ' + escapeHtml(booking.companion_other_names) : ''}
+                                    <br>${booking.supervision_ack ? '✅ Supervision statement agreed' : '⚠️ Supervision statement NOT agreed'}
+                                </span>` : ''}
                             </div>
                             <div class="booking-actions">
                                 <button class="btn btn-small btn-danger" onclick="deleteBooking(${booking.id}, '${containerId}')">Delete</button>

@@ -129,6 +129,56 @@
                 </div>
                 
                 <div class="form-group">
+                    <label>Is anyone coming with you, such as a carer or support worker? *</label>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="bringing-companion" value="no" checked onchange="toggleCompanionFields()">
+                            No, I'm coming on my own
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="bringing-companion" value="yes" onchange="toggleCompanionFields()">
+                            Yes, a carer or support worker is coming with me
+                        </label>
+                    </div>
+                </div>
+
+                <div id="companion-details" class="hidden">
+                    <div class="safeguarding-notice">
+                        <p><strong>Please read before continuing</strong></p>
+                        <ul>
+                            <li>Carers and support workers <strong>remain responsible for actively supervising</strong> the person they attend with, for the whole event.</li>
+                            <li>LAGC volunteers <strong>cannot act as substitute carers</strong> and cannot provide personal care, behavioural support, or one-to-one supervision.</li>
+                            <li>Failure to disclose relevant supervision or risk information <strong>may affect whether someone can attend future events</strong>.</li>
+                        </ul>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="companion-name">Carer / support worker full name *</label>
+                        <input type="text" id="companion-name">
+                    </div>
+                    <div class="form-group">
+                        <label for="companion-agency">Agency / organisation name *</label>
+                        <input type="text" id="companion-agency" placeholder="If they are a family member or independent, please write 'Family' or 'Independent'">
+                    </div>
+                    <div class="form-group">
+                        <label for="companion-mobile">Carer / support worker mobile number *</label>
+                        <input type="tel" id="companion-mobile">
+                        <small style="display:block; margin-top:0.4rem; color:var(--text-light);">So we can contact them during the event if needed.</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="companion-other-names">Names of anyone else attending with you (optional)</label>
+                        <textarea id="companion-other-names" rows="2" placeholder="Please list the full name of anyone else coming with you"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="radio-label" for="supervision-ack">
+                            <input type="checkbox" id="supervision-ack">
+                            <span>I confirm that the carer or support worker named above understands they <strong>remain responsible for actively supervising</strong> the person they attend with throughout the event, and that LAGC volunteers cannot provide personal care, behavioural support, or one-to-one supervision. *</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
                     <label for="additional-info">Anything else we should know?</label>
                     <textarea id="additional-info" rows="3" placeholder="e.g., Accessibility needs, I'll be arriving late, I'm nervous about meeting new people"></textarea>
                 </div>

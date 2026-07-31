@@ -61,7 +61,15 @@ class Booking(db.Model):
     
     # Meeting preference
     meeting_preference = db.Column(db.String(50), nullable=True)
-    
+
+    # Safeguarding - carer / support worker details
+    bringing_companion = db.Column(db.Boolean, default=False)
+    companion_name = db.Column(db.String(200), nullable=True)
+    companion_agency = db.Column(db.String(200), nullable=True)
+    companion_mobile = db.Column(db.String(40), nullable=True)
+    companion_other_names = db.Column(db.Text, nullable=True)
+    supervision_ack = db.Column(db.Boolean, default=False)
+
     # Additional info
     is_first_time = db.Column(db.Boolean, default=True)
     additional_info = db.Column(db.Text, nullable=True)
@@ -240,6 +248,39 @@ def send_confirmation_email(to_email, subject, html_message):
     except Exception as e:
         print(f"[ERROR] Failed to send email: {e}")
         return False
+
+def ensure_schema():
+    """Add any columns missing from an existing database.
+
+    SQLite cannot alter a table to match a changed model automatically, and
+    db.create_all() only creates tables that do not yet exist. Without this,
+    a database created before a new field was added raises "no such column"
+    on every query. ALTER TABLE ADD COLUMN is non-destructive.
+    """
+    from sqlalchemy import inspect, text
+
+    expected_columns = {
+        'meeting_preference': 'VARCHAR(50)',
+        'bringing_companion': 'BOOLEAN DEFAULT 0',
+        'companion_name': 'VARCHAR(200)',
+        'companion_agency': 'VARCHAR(200)',
+        'companion_mobile': 'VARCHAR(40)',
+        'companion_other_names': 'TEXT',
+        'supervision_ack': 'BOOLEAN DEFAULT 0',
+    }
+
+    inspector = inspect(db.engine)
+    if 'booking' not in inspector.get_table_names():
+        return  # create_all() will build it from the model
+
+    existing = {col['name'] for col in inspector.get_columns('booking')}
+
+    for name, coltype in expected_columns.items():
+        if name not in existing:
+            db.session.execute(text(f'ALTER TABLE booking ADD COLUMN {name} {coltype}'))
+            print(f"[SCHEMA] Added missing column: booking.{name}")
+
+    db.session.commit()
 
 def init_default_data():
     """Initialize default lunch dates and settings"""
@@ -472,6 +513,31 @@ def create_booking():
     if existing_booking:
         return jsonify({'error': 'You have already booked for this lunch date'}), 409
     
+    # Safeguarding - carer / support worker details
+    bringing_companion = bool(data.get('bringing_companion', False))
+    companion_name = data.get('companion_name', '').strip()
+    companion_agency = data.get('companion_agency', '').strip()
+    companion_mobile = data.get('companion_mobile', '').strip()
+    companion_other_names = data.get('companion_other_names', '').strip()
+    supervision_ack = bool(data.get('supervision_ack', False))
+
+    if bringing_companion:
+        if not companion_name:
+            return jsonify({'error': "Please enter the full name of the carer or support worker attending with you"}), 400
+        if not companion_agency:
+            return jsonify({'error': "Please enter the agency or organisation name (or 'Family' / 'Independent')"}), 400
+        if not companion_mobile:
+            return jsonify({'error': "Please enter a mobile number for the carer or support worker"}), 400
+        if not supervision_ack:
+            return jsonify({'error': 'The supervision responsibility statement must be agreed to before booking'}), 400
+    else:
+        # Do not retain companion details if the answer is "no"
+        companion_name = ''
+        companion_agency = ''
+        companion_mobile = ''
+        companion_other_names = ''
+        supervision_ack = False
+
     # Create booking
     cancel_token = secrets.token_urlsafe(32)
     meeting_preference = data.get('meeting_preference', 'church')
@@ -485,6 +551,12 @@ def create_booking():
         drink=drink,
         dietary_requirements=data.get('dietary_requirements', '').strip(),
         meeting_preference=meeting_preference,
+        bringing_companion=bringing_companion,
+        companion_name=companion_name,
+        companion_agency=companion_agency,
+        companion_mobile=companion_mobile,
+        companion_other_names=companion_other_names,
+        supervision_ack=supervision_ack,
         is_first_time=is_first_time,
         additional_info=data.get('additional_info', '').strip(),
         cancel_token=cancel_token
@@ -515,6 +587,17 @@ def create_booking():
         confirmation_message
     )
     
+    # Safeguarding block for the admin notification
+    if bringing_companion:
+        safeguarding_block = f"""*** ATTENDING WITH A CARER / SUPPORT WORKER ***
+- Name: {companion_name}
+- Agency/Organisation: {companion_agency}
+- Mobile (contactable during the event): {companion_mobile}
+- Others attending: {companion_other_names or 'None listed'}
+- Supervision responsibility statement agreed: {'YES' if supervision_ack else 'NO'}"""
+    else:
+        safeguarding_block = "Attending with a carer/support worker: No"
+
     # Send admin notification
     admin_message = f"""New Women's Lunch Booking:
 
@@ -529,6 +612,8 @@ Order:
 {f"Dietary: {data.get('dietary_requirements', '')}" if data.get('dietary_requirements') else ''}
 
 Meeting Preference: {'Meet at Holy Sepulchre Church at 11:45 AM' if meeting_preference == 'church' else 'Meet at the pub at 12:00 PM'}
+
+{safeguarding_block}
 
 First Time: {'Yes' if is_first_time else 'No'}
 Additional Info: {data.get('additional_info', 'None')}
@@ -740,6 +825,12 @@ def admin_get_bookings():
             'drink': booking.drink,
             'dietary_requirements': booking.dietary_requirements,
             'meeting_preference': booking.meeting_preference,
+            'bringing_companion': booking.bringing_companion,
+            'companion_name': booking.companion_name,
+            'companion_agency': booking.companion_agency,
+            'companion_mobile': booking.companion_mobile,
+            'companion_other_names': booking.companion_other_names,
+            'supervision_ack': booking.supervision_ack,
             'is_first_time': booking.is_first_time,
             'additional_info': booking.additional_info
         })
@@ -769,6 +860,12 @@ def admin_get_bookings_archive():
             'drink': booking.drink,
             'dietary_requirements': booking.dietary_requirements,
             'meeting_preference': booking.meeting_preference,
+            'bringing_companion': booking.bringing_companion,
+            'companion_name': booking.companion_name,
+            'companion_agency': booking.companion_agency,
+            'companion_mobile': booking.companion_mobile,
+            'companion_other_names': booking.companion_other_names,
+            'supervision_ack': booking.supervision_ack,
             'is_first_time': booking.is_first_time,
             'additional_info': booking.additional_info
         })
@@ -810,8 +907,22 @@ def admin_delete_booking(booking_id):
 # INITIALIZATION
 # ============================================================================
 
+def initialise_database():
+    """Create tables, apply pending column additions and seed defaults.
+
+    Runs on import so it also happens under WSGI (PythonAnywhere), where the
+    __main__ block below never executes. Failures are logged rather than
+    raised so a database problem cannot stop the app from starting.
+    """
+    try:
+        with app.app_context():
+            db.create_all()
+            ensure_schema()
+            init_default_data()
+    except Exception as e:
+        print(f"[ERROR] Database initialisation failed: {e}")
+
+initialise_database()
+
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        init_default_data()
     app.run(debug=True, host='0.0.0.0', port=5002)

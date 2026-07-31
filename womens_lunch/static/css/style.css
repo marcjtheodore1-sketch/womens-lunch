@@ -704,6 +704,56 @@ p {
 }
 
 /* ============================================
+   SAFEGUARDING NOTICE
+   ============================================ */
+
+.safeguarding-notice {
+    background: #fff3cd;
+    border-left: 4px solid var(--warning);
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+    color: #856404;
+}
+
+.safeguarding-notice p {
+    margin-bottom: 0.5rem;
+}
+
+.safeguarding-notice ul {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+.safeguarding-notice li {
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.safeguarding-notice li:last-child {
+    margin-bottom: 0;
+}
+
+/* Admin: carer / support worker flag on a booking */
+.companion-flag {
+    display: block;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #fff3cd;
+    border-left: 3px solid var(--warning);
+    border-radius: var(--radius-sm);
+    color: #856404;
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+.companion-flag.missing-ack {
+    background: #fed7d7;
+    border-left-color: var(--danger-dark);
+    color: #822727;
+}
+
+/* ============================================
    MY BOOKINGS
    ============================================ */
 
