@@ -776,6 +776,35 @@ p {
     font-size: 0.95rem;
 }
 
+.volunteer-reminder-principles {
+    list-style: none;
+    padding-left: 0;
+}
+
+.volunteer-reminder-principles li {
+    position: relative;
+    padding: 0.3rem 0 0.3rem 1.6rem;
+    margin-bottom: 0.2rem;
+}
+
+.volunteer-reminder-principles li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: #2b6cb0;
+    font-weight: 700;
+}
+
+.volunteer-reminder-emergency {
+    background: #fff5f5;
+    border: 1.5px solid #feb2b2;
+    border-left: 4px solid var(--danger-dark);
+    border-radius: var(--radius);
+    padding: 0.9rem 1.1rem;
+    margin: 1rem 0 1.25rem;
+    color: #822727;
+}
+
 .volunteer-reminder-escalate {
     margin-bottom: 0;
     padding-top: 0.75rem;
