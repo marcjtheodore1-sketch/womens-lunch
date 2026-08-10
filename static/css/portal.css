@@ -157,10 +157,16 @@ button, input, textarea, select { font: inherit; }
 .flash.success { border-color: var(--success); background: #eaf8f2; }
 
 /* Shared headings and buttons */
+/* Seamless shimmer.
+   The gradient must tile perfectly for the loop to be invisible, so it uses a
+   straight 90deg (an angled gradient does not line up at the tile edges) and
+   starts and ends on the same colour. The animation then travels exactly one
+   tile width, in em so it scales with the text, which means the last frame is
+   identical to the first and the loop never jumps. */
 .glow-heading {
   color: transparent;
-  background: linear-gradient(
-    100deg,
+  background-image: linear-gradient(
+    90deg,
     #5731aa 0%,
     #714fc5 14%,
     #8b5fd4 26%,
@@ -170,15 +176,16 @@ button, input, textarea, select { font: inherit; }
     #7953c8 82%,
     #5731aa 100%
   );
-  background-size: 240% 100%;
+  background-size: 12em 100%;
+  background-repeat: repeat;
   background-clip: text;
   -webkit-background-clip: text;
   filter: drop-shadow(0 1px 5px rgba(107, 70, 193, .28));
-  animation: heading-shimmer 9s linear infinite;
+  animation: heading-shimmer 12s linear infinite;
 }
 @keyframes heading-shimmer {
-  from { background-position: 0% 50%; }
-  to { background-position: 240% 50%; }
+  from { background-position: 0 50%; }
+  to { background-position: 12em 50%; }
 }
 .eyebrow {
   margin: 0 0 .5rem;
@@ -275,29 +282,30 @@ button, input, textarea, select { font: inherit; }
 .activity-card h2 { margin: 0 0 .65rem; font-size: 1.65rem; line-height: 1.15; }
 .activity-glow-title {
   color: transparent;
-  background-size: 230% 100%;
+  background-size: 12em 100%;
+  background-repeat: repeat;
   background-clip: text;
   -webkit-background-clip: text;
-  animation: heading-shimmer 9s linear infinite;
+  animation: heading-shimmer 12s linear infinite;
 }
 .film-glow {
-  background-image: linear-gradient(100deg, #176796, #3e97d2, #75bce8, #247eae, #5dade0, #176796);
+  background-image: linear-gradient(90deg, #176796, #3e97d2, #75bce8, #247eae, #5dade0, #176796);
   filter: drop-shadow(0 1px 4px rgba(62, 151, 210, .34));
 }
 .lunch-glow {
-  background-image: linear-gradient(100deg, #276749, #4c963c, #75b73b, #3e8138, #8ac957, #276749);
+  background-image: linear-gradient(90deg, #276749, #4c963c, #75b73b, #3e8138, #8ac957, #276749);
   filter: drop-shadow(0 1px 4px rgba(83, 154, 61, .32));
 }
 .strolling-glow {
-  background-image: linear-gradient(100deg, #5731aa, #714fc5, #9f7aea, #6b46c1, #b794f4, #5731aa);
+  background-image: linear-gradient(90deg, #5731aa, #714fc5, #9f7aea, #6b46c1, #b794f4, #5731aa);
   filter: drop-shadow(0 1px 4px rgba(107, 70, 193, .32));
 }
 .fridays-glow {
-  background-image: linear-gradient(100deg, #312e81, #4f46e5, #818cf8, #4338ca, #6366f1, #312e81);
+  background-image: linear-gradient(90deg, #312e81, #4f46e5, #818cf8, #4338ca, #6366f1, #312e81);
   filter: drop-shadow(0 1px 4px rgba(79, 70, 229, .30));
 }
 .workplace-glow {
-  background-image: linear-gradient(100deg, #8f1f34, #c82e48, #e45b70, #aa263d, #ef7182, #8f1f34);
+  background-image: linear-gradient(90deg, #8f1f34, #c82e48, #e45b70, #aa263d, #ef7182, #8f1f34);
   filter: drop-shadow(0 1px 4px rgba(200, 46, 72, .34));
 }
 .activity-card > p { margin: 0 0 1.1rem; color: #475569; }
@@ -335,7 +343,7 @@ button, input, textarea, select { font: inherit; }
   letter-spacing: -.05em;
 }
 .workplace-hero .glow-heading {
-  background-image: linear-gradient(100deg, #8f1f34, #c82e48, #ee6e81, #a8243c, #df5269, #8f1f34);
+  background-image: linear-gradient(90deg, #8f1f34, #c82e48, #ee6e81, #a8243c, #df5269, #8f1f34);
   filter: drop-shadow(0 1px 5px rgba(200, 46, 72, .36));
 }
 .workplace-story h2, .workplace-for-section h2, .workplace-sessions .section-heading h2, .workplace-venue h2 { color: #98233b; }
@@ -349,8 +357,22 @@ button, input, textarea, select { font: inherit; }
 .programme-time { margin: .55rem 0 0; color: #98233b; font-size: .78rem; font-weight: 800; text-transform: uppercase; }
 .workplace-for-section { padding: 4.5rem 0; background: #fff2f4; border-block: 1px solid #f0ccd3; }
 .workplace-for-grid { display: grid; grid-template-columns: 1.25fr .75fr; gap: 2rem; align-items: start; }
-.workplace-check-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: .55rem 1.4rem; padding: 0; list-style: none; }
-.workplace-check-list li::before { content: '✓'; margin-right: .55rem; color: #a92842; font-weight: 900; }
+/* Flowed columns rather than a grid: grid rows are as tall as their tallest
+   item, so a wrapped entry left a ragged gap beside a short one. */
+.workplace-check-list { columns: 2; column-gap: 2rem; margin: .75rem 0 0; padding: 0; list-style: none; }
+.workplace-check-list li {
+  margin: 0 0 .6rem;
+  padding-left: 1.4rem;
+  position: relative;
+  break-inside: avoid;
+}
+.workplace-check-list li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: #a92842;
+  font-weight: 900;
+}
 .workplace-expect-card { padding: 1.5rem; background: white; border: 3px solid var(--brand-red); border-radius: 12px; }
 .workplace-expect-card h3 { margin-top: 0; color: #98233b; }
 .workplace-expect-card ul { margin-bottom: 0; padding-left: 1.25rem; }
@@ -412,7 +434,7 @@ button, input, textarea, select { font: inherit; }
   letter-spacing: -.05em;
 }
 .film-hero .glow-heading {
-  background-image: linear-gradient(100deg, #176796, #2b8fc5, #70bce5, #247dab, #4aa6d8, #176796);
+  background-image: linear-gradient(90deg, #176796, #2b8fc5, #70bce5, #247dab, #4aa6d8, #176796);
   filter: drop-shadow(0 1px 5px rgba(62, 151, 210, .35));
 }
 .hero-lede { max-width: 660px; margin: 0 auto 1.4rem; color: #475569; font-size: 1.08rem; }
@@ -434,12 +456,9 @@ button, input, textarea, select { font: inherit; }
   justify-content: center;
   gap: .7rem;
   background: white;
-  border: 2px solid var(--brand-pink);
+  border: 2px solid #1a1a1a;
   border-radius: 10px;
 }
-.quick-facts > div:nth-child(2) { border-color: var(--brand-yellow); }
-.quick-facts > div:nth-child(3) { border-color: var(--brand-blue); }
-.quick-facts > div:nth-child(4) { border-color: var(--brand-green); }
 .quick-facts p { margin: 0; font-size: .91rem; }
 .fact-icon { font-size: 1.3rem; }
 
@@ -643,7 +662,9 @@ input, textarea, select {
 .community-guidelines-card h2 { margin: 0 0 .45rem; color: var(--brand-purple-dark) !important; font-size: 1.2rem; }
 .community-guidelines-card p { margin: .35rem 0; color: #3f4654; }
 .community-guidelines-card a { color: var(--brand-purple-dark); text-underline-offset: 3px; }
-.public-guidelines-wrap { margin-top: -2rem; margin-bottom: 4.5rem; }
+/* Sits below the preceding section rather than being pulled up into it, which
+   made the card straddle the section's background and border. */
+.public-guidelines-wrap { margin-top: 3rem; margin-bottom: 4.5rem; }
 .privacy-note, .gentle-prompt, .notice-card {
   padding: 1rem;
   background: #f1ebff;
@@ -855,7 +876,8 @@ th { background: #f1f5f9; font-size: .73rem; text-transform: uppercase; letter-s
   .screening-card { grid-template-columns: auto 1fr; }
   .screening-card .button { grid-column: 1 / -1; }
   .nomination-banner, .venue-section { grid-template-columns: 1fr; }
-  .workplace-for-grid, .workplace-check-list { grid-template-columns: 1fr; }
+  .workplace-for-grid { grid-template-columns: 1fr; }
+  .workplace-check-list { columns: 1; }
   .confirmation-ticket > div { flex-direction: column; }
   .confirmation-ticket span { text-align: left; }
   .admin-session-grid, .rota-grid, .two-column-admin, .session-email-grid, .two-field-row { grid-template-columns: 1fr; }
