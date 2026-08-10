@@ -38,6 +38,13 @@ app.config['SMTP_PORT'] = int(os.environ.get('SMTP_PORT', '587'))
 app.config['SMTP_USER'] = os.environ.get('SMTP_USER', '')
 app.config['SMTP_PASSWORD'] = os.environ.get('SMTP_PASSWORD', '')
 app.config['SMTP_FROM'] = os.environ.get('SMTP_FROM', app.config['SMTP_USER'])
+app.config['ACTIVITIES_SMTP_HOST'] = os.environ.get('ACTIVITIES_SMTP_HOST', 'smtp.gmail.com')
+app.config['ACTIVITIES_SMTP_PORT'] = int(os.environ.get('ACTIVITIES_SMTP_PORT', '587'))
+app.config['ACTIVITIES_SMTP_USER'] = os.environ.get('ACTIVITIES_SMTP_USER', '')
+app.config['ACTIVITIES_SMTP_PASSWORD'] = os.environ.get('ACTIVITIES_SMTP_PASSWORD', '')
+app.config['ACTIVITIES_SMTP_FROM'] = os.environ.get(
+    'ACTIVITIES_SMTP_FROM', app.config['ACTIVITIES_SMTP_USER']
+)
 app.config['ADMIN_EMAIL'] = os.environ.get('ADMIN_EMAIL', 'wg.lagc@gmail.com')
 app.config['ENABLE_EMAIL'] = os.environ.get('ENABLE_EMAIL', 'false').lower() == 'true'
 
@@ -925,14 +932,16 @@ def send_confirmation_email(to_email, subject, html_message):
 
 
 def send_rich_email(to_email, subject, html_message, calendar_content=None):
-    """Send an HTML email, optionally with a universal .ics calendar file."""
-    if not app.config['ENABLE_EMAIL'] or not app.config['SMTP_USER'] or not app.config['SMTP_PASSWORD']:
+    """Send Film Club or AWSS email using the shared activities mailbox."""
+    smtp_user = app.config['ACTIVITIES_SMTP_USER']
+    smtp_password = app.config['ACTIVITIES_SMTP_PASSWORD']
+    if not app.config['ENABLE_EMAIL'] or not smtp_user or not smtp_password:
         app.logger.info('Email disabled; would send %s to %s', subject, to_email)
         return False
 
     try:
         msg = EmailMessage()
-        msg['From'] = app.config['SMTP_FROM']
+        msg['From'] = app.config['ACTIVITIES_SMTP_FROM']
         msg['To'] = to_email
         msg['Subject'] = subject
         msg.set_content('This message contains HTML. Please view it in an email application.')
@@ -943,9 +952,11 @@ def send_rich_email(to_email, subject, html_message, calendar_content=None):
                 maintype='text', subtype='calendar', filename='autistic-film-club.ics',
                 params={'method': 'PUBLISH', 'charset': 'UTF-8'},
             )
-        with smtplib.SMTP(app.config['SMTP_HOST'], app.config['SMTP_PORT']) as server:
+        with smtplib.SMTP(
+            app.config['ACTIVITIES_SMTP_HOST'], app.config['ACTIVITIES_SMTP_PORT']
+        ) as server:
             server.starttls()
-            server.login(app.config['SMTP_USER'], app.config['SMTP_PASSWORD'].replace(' ', '').replace('-', ''))
+            server.login(smtp_user, smtp_password.replace(' ', '').replace('-', ''))
             server.send_message(msg)
         return True
     except Exception as exc:
@@ -1544,6 +1555,34 @@ def film_club_admin():
     )
 
 
+@app.route('/admin/film-club/booking/<int:booking_id>/cancel', methods=['POST'])
+@admin_required
+def film_admin_cancel_booking(booking_id):
+    require_csrf()
+    booking = FilmBooking.query.get_or_404(booking_id)
+    if booking.cancelled_at:
+        flash(f'{booking.full_name}’s booking was already cancelled.', 'error')
+        return redirect(url_for('film_club_admin', tab='bookings'))
+
+    booking.cancelled_at = datetime.utcnow()
+    db.session.commit()
+    email_sent = send_rich_email(
+        booking.email,
+        'Your Film Club booking has been cancelled',
+        f'<p>Hello {escape(booking.full_name)},</p><p>The Film Club team has cancelled your place '
+        f'for {booking.session_ref.session_date.strftime("%A %d %B %Y")}.</p>'
+        '<p>If you were not expecting this, please contact '
+        '<a href="mailto:miles.lagc@gmail.com">miles.lagc@gmail.com</a>.</p>'
+        '<p>London Autism Group Charity</p>',
+    )
+    flash(
+        f'{booking.full_name}’s booking has been cancelled. '
+        + ('A cancellation email was sent.' if email_sent else 'The cancellation email could not be sent.'),
+        'success' if email_sent else 'error',
+    )
+    return redirect(url_for('film_club_admin', tab='bookings'))
+
+
 @app.route('/admin/film-club/session/<int:session_id>', methods=['POST'])
 @admin_required
 def film_admin_update_session(session_id):
@@ -2093,6 +2132,34 @@ def workplace_admin():
             'registration_confirmation_message', DEFAULT_WORKPLACE_CONFIRMATION_MESSAGE
         ),
     )
+
+
+@app.route('/admin/workplace-support/booking/<int:booking_id>/cancel', methods=['POST'])
+@workplace_admin_required
+def workplace_admin_cancel_booking(booking_id):
+    require_csrf()
+    booking = WorkplaceBooking.query.get_or_404(booking_id)
+    if booking.cancelled_at:
+        flash(f'{booking.full_name}’s registration was already cancelled.', 'error')
+        return redirect(url_for('workplace_admin', tab='bookings'))
+
+    booking.cancelled_at = datetime.utcnow()
+    db.session.commit()
+    email_sent = send_rich_email(
+        booking.email,
+        'Your AWSS registration has been cancelled',
+        f'<p>Hello {escape(booking.full_name)},</p><p>The AWSS team has cancelled your registration '
+        f'for {booking.session_ref.session_date.strftime("%A %d %B %Y")}.</p>'
+        '<p>If you were not expecting this, please contact '
+        '<a href="mailto:miles.lagc@gmail.com">miles.lagc@gmail.com</a>.</p>'
+        '<p>London Autism Group Charity</p>',
+    )
+    flash(
+        f'{booking.full_name}’s registration has been cancelled. '
+        + ('A cancellation email was sent.' if email_sent else 'The cancellation email could not be sent.'),
+        'success' if email_sent else 'error',
+    )
+    return redirect(url_for('workplace_admin', tab='bookings'))
 
 
 @app.route('/admin/workplace-support/session/<int:session_id>', methods=['POST'])

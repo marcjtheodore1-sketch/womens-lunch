@@ -67,7 +67,8 @@ The app will be available at http://localhost:5002
 - `ADMIN_PASSWORD`: private admin password
 - `WORKPLACE_ADMIN_PASSWORD`: separate password for Workplace Support administration
 - `ADMIN_EMAIL`: receives booking, cancellation and nomination notices
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`: mail configuration
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`: Women's Lunch mail configuration (`wg.lagc@gmail.com`)
+- `ACTIVITIES_SMTP_HOST`, `ACTIVITIES_SMTP_PORT`, `ACTIVITIES_SMTP_USER`, `ACTIVITIES_SMTP_PASSWORD`, `ACTIVITIES_SMTP_FROM`: Film Club and AWSS mail configuration (`miles.lagc@gmail.com`)
 - `ENABLE_EMAIL`: set to `true` to enable email sending
 - `COOKIE_SECURE`: set to `true` on the HTTPS production site
 
