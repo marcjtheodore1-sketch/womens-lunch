@@ -1313,15 +1313,11 @@ def film_club_book(session_id):
     email = valid_email(request.form.get('email'))
     phone = clean_text(request.form.get('phone'), 40)
     attending_with = request.form.get('attending_with_others')
-    support_acknowledged = request.form.get('support_boundary_acknowledged') == 'on'
     if not full_name or not email or not phone:
         flash('Please provide your name, email address and phone number.', 'error')
         return render_template('film_book.html', film_session=film_session, summary=summary), 400
     if attending_with not in {'yes', 'no'}:
         flash('Please tell us whether anyone else will attend with you.', 'error')
-        return render_template('film_book.html', film_session=film_session, summary=summary), 400
-    if not support_acknowledged:
-        flash('Please confirm that you understand what our volunteers can and cannot provide.', 'error')
         return render_template('film_book.html', film_session=film_session, summary=summary), 400
 
     attending_with_others = attending_with == 'yes'
@@ -1920,11 +1916,6 @@ def workplace_book(session_id):
         ), 400
     if attending_with not in {'yes', 'no'}:
         flash('Please tell us whether anyone else will attend with you.', 'error')
-        return render_template(
-            'workplace_book.html', workplace_session=workplace_session, summary=summary
-        ), 400
-    if request.form.get('support_boundary_acknowledged') != 'on':
-        flash('Please confirm that you understand the volunteer and mentor support boundaries.', 'error')
         return render_template(
             'workplace_book.html', workplace_session=workplace_session, summary=summary
         ), 400
