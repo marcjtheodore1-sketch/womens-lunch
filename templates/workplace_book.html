@@ -1,0 +1,60 @@
+{% extends "portal_base.html" %}
+{% block title %}Register | Autistic Workplace Support{% endblock %}
+{% block body_class %}workplace-page form-page{% endblock %}
+{% block content %}
+<section class="page-shell form-shell">
+  <a class="back-link" href="{{ url_for('workplace_home') }}">← Back to Workplace Support</a>
+  <div class="form-heading"><p class="eyebrow">Reserve a free place</p><h1>{{ workplace_session.session_date.strftime('%A %d %B %Y') }}</h1><p>1pm–4pm at King Square Community Centre · {{ summary.places_left }} place{% if summary.places_left != 1 %}s{% endif %} left</p></div>
+  {% if summary.is_full or not workplace_session.is_bookable %}<div class="notice-card"><h2>Registration is closed</h2><p>Please choose another date.</p></div>{% else %}
+  <form method="post" class="accessible-form" id="workplace-registration-form">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+    <fieldset><legend>About you</legend>
+      <div class="field"><label for="full_name">What is your name? <span>*</span></label><input id="full_name" name="full_name" required maxlength="200" autocomplete="name"></div>
+      <div class="field"><label for="email">What is your email address? <span>*</span></label><input id="email" name="email" type="email" required maxlength="254" autocomplete="email"><small>Your confirmation, calendar invitation and cancellation link will be sent here.</small></div>
+      <div class="field"><label for="phone">What is your phone number? <span>*</span></label><input id="phone" name="phone" type="tel" required maxlength="40" autocomplete="tel"></div>
+      <div class="field"><span class="field-label">Are you aged 18 or over? <span>*</span></span><div class="choice-grid"><label class="choice"><input type="radio" name="is_adult" value="yes" required> Yes</label><label class="choice"><input type="radio" name="is_adult" value="no" required> No</label></div></div>
+    </fieldset>
+    <fieldset><legend>Which parts will you attend?</legend><p class="fieldset-intro">Select one or both. <strong>You must select at least one.</strong></p>
+      <label class="choice session-part-choice"><input type="checkbox" name="attend_mentoring"> <span><strong>1pm–2:30pm: One-to-one mentoring</strong><br>Private time with an autistic employment mentor.</span></label>
+      <label class="choice session-part-choice"><input type="checkbox" name="attend_group_discussion"> <span><strong>2:45pm–4pm: Speaking Circle</strong><br>A confidential, flexible conversation about work experiences.</span></label>
+      <div id="speaking-circle-commitment" class="confidentiality-commitment" hidden><strong>Speaking Circle confidentiality</strong><p>The Speaking Circle is intended to be a confidential, safe space for sharing.</p><label class="choice consent"><input type="checkbox" name="confidentiality_commitment"> I agree not to share another attendee’s personal story or identifying details outside the session. I understand that safeguarding concerns may need to be shared with LAGC’s safeguarding lead or emergency services.</label></div>
+      <div class="field"><span class="field-label">Have you attended these Workplace Support Sessions before?</span><div class="choice-grid"><label class="choice"><input type="radio" name="attended_before" value="yes"> Yes</label><label class="choice"><input type="radio" name="attended_before" value="no"> No</label></div></div>
+      <div class="field"><label for="support_hoped_for">What support are you hoping to receive?</label><textarea id="support_hoped_for" name="support_hoped_for" rows="5"></textarea></div>
+    </fieldset>
+    <fieldset><legend>Access and comfort</legend>
+      <div class="field"><label for="access_needs">Do you have any access or sensory needs we should be aware of?</label><textarea id="access_needs" name="access_needs" rows="4"></textarea></div>
+      <div class="field"><label for="dietary_requirements">Do you have any dietary requirements or allergies?</label><textarea id="dietary_requirements" name="dietary_requirements" rows="3"></textarea></div>
+      <div class="field"><label for="additional_information">Is there anything else that would make the session easier or more comfortable?</label><textarea id="additional_information" name="additional_information" rows="4"></textarea></div>
+    </fieldset>
+    <fieldset><legend>Attending with somebody else</legend>
+      <div class="field"><span class="field-label">Will you attend with anyone else, such as a family member, carer, support worker or friend? <span>*</span></span><div class="choice-grid"><label class="choice"><input type="radio" name="attending_with_others" value="no" required> No</label><label class="choice"><input type="radio" name="attending_with_others" value="yes" required> Yes</label></div></div>
+      <div id="workplace-companion-fields" class="conditional-fields" hidden>
+        <div class="field"><label for="additional_attendee_count">How many other people will attend? <span>*</span></label><input id="additional_attendee_count" name="additional_attendee_count" type="number" min="1" max="10" inputmode="numeric"><small>Each person counts towards the 15 places.</small></div>
+        <div class="field"><label for="companion_details">Who will attend with you? <span>*</span></label><textarea id="companion_details" name="companion_details" rows="3" placeholder="Give each person’s full name and relationship to you"></textarea></div>
+        <div class="field"><span class="field-label">Is one of them a carer or support worker? <span>*</span></span><div class="choice-grid"><label class="choice"><input type="radio" name="has_carer_or_support_worker" value="no"> No</label><label class="choice"><input type="radio" name="has_carer_or_support_worker" value="yes"> Yes</label></div></div>
+        <div id="workplace-carer-fields" class="conditional-fields nested" hidden><div class="field"><label for="carer_name">Carer or support worker’s full name <span>*</span></label><input id="carer_name" name="carer_name" maxlength="200"></div><div class="field"><label for="carer_organisation">Agency or organisation <span>*</span></label><input id="carer_organisation" name="carer_organisation" maxlength="240" placeholder="Write ‘Independent’ if not applicable"></div><div class="field"><label for="carer_mobile">Their mobile number <span>*</span></label><input id="carer_mobile" name="carer_mobile" type="tel" maxlength="40"></div></div>
+        <div class="field"><label for="responsibility_details">Who is responsible for each attendee’s support or supervision during the session? <span>*</span></label><textarea id="responsibility_details" name="responsibility_details" rows="4"></textarea></div>
+      </div>
+      <div class="support-boundary-notice"><h3>Please read carefully</h3><ul><li>LAGC volunteers and employment mentors are hosts and advisers, not substitute carers.</li><li>They cannot provide personal care, behavioural support or one-to-one supervision.</li><li>Anyone needing active support or supervision must bring somebody who remains responsible throughout.</li></ul></div>
+      <label class="choice consent support-acknowledgement"><input type="checkbox" name="support_boundary_acknowledged" required> I have read and understand what volunteers and mentors can and cannot provide. <span>*</span></label>
+    </fieldset>
+    {% include '_community_guidelines.html' %}
+    <div class="advice-disclaimer"><strong>About the guidance offered</strong><p>Mentoring and peer discussion provide general information and lived-experience perspectives. They are not legal, financial, clinical or other regulated professional advice, and London Autism Group Charity cannot guarantee a particular employment outcome. You remain responsible for decisions or actions you take after the session. Nothing here limits any responsibility that cannot lawfully be excluded.</p></div>
+    <div class="privacy-note"><strong>How we use your information</strong><p>We use it to manage your registration, plan appropriate support and contact you about this session.</p></div>
+    <button class="button primary submit-button" type="submit">Complete registration</button>
+  </form>{% endif %}
+</section>
+{% endblock %}
+{% block scripts %}<script>
+const companionBox=document.getElementById('workplace-companion-fields'),carerBox=document.getElementById('workplace-carer-fields');
+const companionInputs=[...companionBox.querySelectorAll('input,textarea')],carerInputs=[...carerBox.querySelectorAll('input')];
+function requireFields(items,on){items.forEach(item=>on?item.setAttribute('required',''):item.removeAttribute('required'))}
+function updateCarer(){const yes=document.querySelector('[name="has_carer_or_support_worker"][value="yes"]')?.checked;carerBox.hidden=!yes;requireFields(carerInputs,yes)}
+function updateCompanions(){const yes=document.querySelector('[name="attending_with_others"][value="yes"]')?.checked;companionBox.hidden=!yes;requireFields(companionInputs,yes);if(yes)updateCarer();else{carerBox.hidden=true;requireFields(carerInputs,false)}}
+document.querySelectorAll('[name="attending_with_others"]').forEach(el=>el.addEventListener('change',updateCompanions));document.querySelectorAll('[name="has_carer_or_support_worker"]').forEach(el=>el.addEventListener('change',updateCarer));updateCompanions();
+const registrationForm=document.getElementById('workplace-registration-form'),sessionParts=[...document.querySelectorAll('[name="attend_mentoring"],[name="attend_group_discussion"]')];
+const speakingCircle=document.querySelector('[name="attend_group_discussion"]'),confidentialityBox=document.getElementById('speaking-circle-commitment'),confidentialityCheck=document.querySelector('[name="confidentiality_commitment"]');
+function updateConfidentiality(){confidentialityBox.hidden=!speakingCircle.checked;confidentialityCheck.required=speakingCircle.checked;if(!speakingCircle.checked)confidentialityCheck.checked=false}
+function validateSessionParts(){const valid=sessionParts.some(item=>item.checked);sessionParts[0].setCustomValidity(valid?'':'Select at least one part of the session.');return valid}
+sessionParts.forEach(item=>item.addEventListener('change',()=>{validateSessionParts();updateConfidentiality()}));updateConfidentiality();registrationForm.addEventListener('submit',event=>{if(!validateSessionParts()){event.preventDefault();sessionParts[0].reportValidity()}});
+</script>{% endblock %}

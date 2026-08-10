@@ -1,0 +1,64 @@
+{% extends "portal_base.html" %}
+{% block title %}Book Film Club | {{ film_session.session_date.strftime('%d %B %Y') }}{% endblock %}
+{% block body_class %}film-page form-page{% endblock %}
+{% block content %}
+<section class="page-shell form-shell">
+    <a class="back-link" href="{{ url_for('film_club_home') }}">← Back to Film Club</a>
+    <div class="form-heading"><p class="eyebrow">Reserve a free place</p><h1>{{ film_session.session_date.strftime('%A %d %B %Y') }}</h1><p>5pm–8pm at Artizan Street Library · {{ summary.places_left }} place{% if summary.places_left != 1 %}s{% endif %} left</p></div>
+    {% if summary.is_full or not film_session.is_bookable %}
+      <div class="notice-card"><h2>Bookings are closed</h2><p>Please choose another date from the Film Club page.</p></div>
+    {% else %}
+    <form method="post" class="accessible-form">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        <fieldset><legend>About you</legend>
+            <div class="field"><label for="full_name">What is your name? <span>*</span></label><input id="full_name" name="full_name" required autocomplete="name" maxlength="200"></div>
+            <div class="field"><label for="email">What is your email address? <span>*</span></label><input id="email" name="email" type="email" required autocomplete="email" maxlength="254"><small>We will send your confirmation, calendar invitation and cancellation link here.</small></div>
+            <div class="field"><label for="phone">What is your phone number? <span>*</span></label><input id="phone" name="phone" type="tel" required autocomplete="tel" maxlength="40"><small>We will use this only if we need to contact you about the session.</small></div>
+            <div class="field"><span class="field-label">Are you aged 18 or over? <span>*</span></span><label class="choice"><input type="radio" name="is_adult" value="yes" required> Yes, I am 18 or over</label><label class="choice"><input type="radio" name="is_adult" value="no" required> No, I am under 18</label></div>
+        </fieldset>
+        <fieldset><legend>Attending with somebody else</legend>
+            <div class="field"><span class="field-label">Will you be attending with anyone else, such as a family member, carer, support worker or friend? <span>*</span></span><div class="choice-grid"><label class="choice"><input type="radio" name="attending_with_others" value="no" required> No</label><label class="choice"><input type="radio" name="attending_with_others" value="yes" required> Yes</label></div></div>
+            <div id="companion-fields" class="conditional-fields" hidden>
+                <div class="field"><label for="additional_attendee_count">How many other people will attend with you? <span>*</span></label><input id="additional_attendee_count" name="additional_attendee_count" type="number" min="1" max="10" inputmode="numeric"><small>Each person counts towards the 15 available places.</small></div>
+                <div class="field"><label for="companion_details">Who will be attending with you? <span>*</span></label><textarea id="companion_details" name="companion_details" rows="3" placeholder="Give each person’s full name and their relationship to you"></textarea></div>
+                <div class="field"><span class="field-label">Is one of them a carer or support worker? <span>*</span></span><div class="choice-grid"><label class="choice"><input type="radio" name="has_carer_or_support_worker" value="no"> No</label><label class="choice"><input type="radio" name="has_carer_or_support_worker" value="yes"> Yes</label></div></div>
+                <div id="carer-fields" class="conditional-fields nested" hidden>
+                    <p class="fieldset-intro">Please give their details so our volunteers can contact them during the session if needed.</p>
+                    <div class="field"><label for="carer_name">Carer or support worker’s full name <span>*</span></label><input id="carer_name" name="carer_name" maxlength="200"></div>
+                    <div class="field"><label for="carer_organisation">Agency or organisation <span>*</span></label><input id="carer_organisation" name="carer_organisation" maxlength="240" placeholder="Write ‘Independent’ if not applicable"></div>
+                    <div class="field"><label for="carer_mobile">Their mobile number <span>*</span></label><input id="carer_mobile" name="carer_mobile" type="tel" maxlength="40" autocomplete="off"></div>
+                </div>
+                <div class="field"><label for="responsibility_details">Who will be responsible for each attendee’s support or supervision during the Film Club? <span>*</span></label><textarea id="responsibility_details" name="responsibility_details" rows="4" placeholder="Please explain clearly who is responsible for whom during the session"></textarea></div>
+            </div>
+            <div class="support-boundary-notice"><h3>Please read carefully</h3><ul><li>LAGC volunteers are hosts, not substitute carers. They cannot provide personal care, behavioural support or one-to-one supervision.</li><li>If you or somebody attending with you needs active support or supervision, they must attend with a carer or support person who remains responsible throughout.</li><li>There will always be at least two LAGC volunteers present, but they cannot fill a care or supervision gap.</li></ul></div>
+            <label class="choice consent support-acknowledgement"><input type="checkbox" name="support_boundary_acknowledged" required> I have read and understand what Film Club volunteers can and cannot provide. <span>*</span></label>
+        </fieldset>
+        <fieldset><legend>What would make the session comfortable?</legend><p class="fieldset-intro">These questions are optional. Our volunteer team uses your answers to prepare the room and support you.</p>
+            <div class="field"><label for="access_needs">Do you have any access or sensory needs?</label><textarea id="access_needs" name="access_needs" rows="4"></textarea></div>
+            <div class="field"><label for="seating_preferences">Do you have any seating preferences?</label><textarea id="seating_preferences" name="seating_preferences" rows="3" placeholder="For example: a chair near the door, at the back, or at the end of a row"></textarea></div>
+            <div class="field"><label for="comfort_information">Is there anything else that would make the experience easier or more comfortable?</label><textarea id="comfort_information" name="comfort_information" rows="4"></textarea></div>
+            <div class="field"><label for="dietary_requirements">Do you have any dietary requirements or allergies?</label><textarea id="dietary_requirements" name="dietary_requirements" rows="3"></textarea></div>
+        </fieldset>
+        <fieldset><legend>Film choices and future sessions</legend>
+            <div class="field"><span class="field-label">Would you like to express interest in choosing a film for a future month?</span><label class="choice"><input type="radio" name="interested_in_nominating" value="yes"> Yes</label><label class="choice"><input type="radio" name="interested_in_nominating" value="no" checked> Not at the moment</label></div>
+            <label class="choice consent"><input type="checkbox" name="future_updates_opt_in"> Email me about future Autistic Film Club sessions. I can ask to be removed at any time.</label>
+        </fieldset>
+        {% include '_community_guidelines.html' %}
+        <div class="privacy-note"><strong>How we use your information</strong><p>We use it to manage this booking, support you safely and contact you about this and future sessions. Future invitations are optional.</p></div>
+        <button class="button primary submit-button" type="submit">Confirm my place</button>
+    </form>
+    {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}<script>
+const companionBox=document.getElementById('companion-fields');
+const carerBox=document.getElementById('carer-fields');
+const companionInputs=[...companionBox.querySelectorAll('input,textarea')];
+const carerInputs=[...carerBox.querySelectorAll('input')];
+function setRequired(elements,on){elements.forEach(el=>{if(on)el.setAttribute('required','');else el.removeAttribute('required')})}
+function updateCarer(){const yes=document.querySelector('[name="has_carer_or_support_worker"][value="yes"]')?.checked;carerBox.hidden=!yes;setRequired(carerInputs,yes)}
+function updateCompanions(){const yes=document.querySelector('[name="attending_with_others"][value="yes"]')?.checked;companionBox.hidden=!yes;setRequired(companionInputs,yes);if(!yes){setRequired(carerInputs,false);carerBox.hidden=true}else updateCarer()}
+document.querySelectorAll('[name="attending_with_others"]').forEach(el=>el.addEventListener('change',updateCompanions));
+document.querySelectorAll('[name="has_carer_or_support_worker"]').forEach(el=>el.addEventListener('change',updateCarer));
+updateCompanions();
+</script>{% endblock %}

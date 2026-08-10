@@ -1,6 +1,8 @@
-# LAGC Autistic Women's Lunch Group Registration System
+# London Autism Group Charity Activities
 
-A registration system for the London Autism Group Charity's monthly Autistic Women's Lunch Group.
+A single Flask/PythonAnywhere service for the charity's Autistic Women's Lunch
+and monthly Autistic Film Club.
+It also hosts the charity's monthly Autistic Workplace Support Sessions.
 
 ## Features
 
@@ -11,6 +13,20 @@ A registration system for the London Autism Group Charity's monthly Autistic Wom
 - **Booking Window**: Only the next upcoming lunch is bookable
 - **Admin Panel**: Manage dates, view bookings, archive past events
 - **Email Notifications**: Automatic confirmation emails
+- **Activities Gateway**: Root page links to both activity websites
+- **Autistic Film Club**: Six-month schedule, 15-place registration, film nominations and cancellations
+- **Calendar Invitations**: Google Calendar link and universal `.ics` attachment
+- **Film Club Support Planning**: Companion/carer details, responsibility information and party-size capacity counting
+- **Film Club Admin**: Film Club-only bookings, nominations, rota, safeguarding guidance and CSV export
+- **Optional Invitations**: A manual, one-use-per-session invitation tool for low numbers
+- **Email Automation**: Editable confirmation copy, session-specific notes and film-announcement notifications
+- **Film Club News**: Optional rotating homepage ticker managed from the Film Club admin area
+- **Autistic Workplace Support**: Rolling last-Saturday schedule with 15-place registration
+- **Flexible Attendance**: Register for one-to-one mentoring, the confidential Speaking Circle or both
+- **Workplace Support Planning**: Goals, access needs and companion/carer information in a dedicated admin area
+- **Workplace Support Emails**: Confirmation, selected-time calendar invitation, cancellation and editable session notes
+- **Workplace Support Invitations**: Manual, one-use-per-session invitations for low-number dates
+- **Workplace Support News**: Optional admin-managed homepage news ticker
 
 ## Setup
 
@@ -26,17 +42,87 @@ python app.py
 
 The app will be available at http://localhost:5002
 
+## URLs
+
+- `/` - LAGC activities gateway
+- `/womens-lunch` - existing Women's Lunch site
+- `/film-club` - Film Club schedule, booking and nominations
+- `/workplace-support` - Workplace Support schedule and registration
+- `/admin` and `/admin/womens-lunch` - existing Women's Lunch administration
+- `/admin/film-club` - Film Club-only administration
+- `/admin/workplace-support` - Workplace Support-only administration
+
 ## Admin Access
 
-- URL: `/admin`
-- Default password: `womenslunch`
+- Film Club URL: `/admin/film-club`
+- Workplace Support URL: `/admin/workplace-support`
+- Women's Lunch URL: `/admin/womens-lunch`
+- Film Club and Women's Lunch password: supplied through `ADMIN_PASSWORD`
+- Workplace Support password: supplied separately through `WORKPLACE_ADMIN_PASSWORD`
+- There are no production passwords in the source
 
 ## Environment Variables
 
-- `ADMIN_PASSWORD`: Admin login password
-- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`: Email configuration
-- `ENABLE_EMAIL`: Set to `true` to enable email sending
+- `SECRET_KEY`: a long, random value that keeps sessions secure
+- `ADMIN_PASSWORD`: private admin password
+- `WORKPLACE_ADMIN_PASSWORD`: separate password for Workplace Support administration
+- `ADMIN_EMAIL`: receives booking, cancellation and nomination notices
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`: mail configuration
+- `ENABLE_EMAIL`: set to `true` to enable email sending
+- `COOKIE_SECURE`: set to `true` on the HTTPS production site
+
+Copy the names from `.env.example` into the PythonAnywhere web app environment.
+Do not upload a real `.env` file. Rotate the previously embedded Gmail app
+password before enabling email.
 
 ## Deployment
 
-Deploy to PythonAnywhere or similar hosting service. Use the included `wsgi.py` for WSGI configuration.
+The live PythonAnywhere checkout is:
+
+```text
+/home/londonautismgroupcharity/womens-lunch
+```
+
+The production database, email credentials, secret key and admin passwords are
+stored only on PythonAnywhere. They are deliberately excluded from Git.
+
+### Publishing a change to GitHub
+
+From a local checkout, including when working with Codex or Claude:
+
+```bash
+git pull --ff-only origin main
+# Make and test the changes.
+git status
+git diff
+git add <the-files-you-intended-to-change>
+git commit -m "Describe the change"
+git push origin main
+```
+
+Do not commit `.env`, `instance/`, database files, deployment archives or the
+Python virtual environment.
+
+### Deploying the GitHub version to PythonAnywhere
+
+Open a Bash console on PythonAnywhere and run:
+
+```bash
+cd /home/londonautismgroupcharity/womens-lunch
+git status
+git pull --ff-only origin main
+```
+
+If `requirements.txt` changed, also run:
+
+```bash
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+Finally, open the PythonAnywhere **Web** tab and press **Reload** for
+`londonautismgroupcharity.pythonanywhere.com`.
+
+Use the included `wsgi.py` for local or conventional WSGI hosting. The live
+PythonAnywhere WSGI file additionally supplies the private production
+environment variables and must not be replaced with a public file.

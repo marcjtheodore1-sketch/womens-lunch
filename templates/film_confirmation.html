@@ -1,0 +1,13 @@
+{% extends "portal_base.html" %}
+{% block title %}Film Club booking confirmed | LAGC{% endblock %}
+{% block body_class %}film-page form-page{% endblock %}
+{% block content %}
+<section class="page-shell message-shell success-shell">
+    <div class="message-icon" aria-hidden="true">✓</div><p class="eyebrow">Place reserved</p><h1>You're booked in, {{ booking.full_name }}</h1>
+    <div class="confirmation-ticket"><div><strong>{{ booking.session_ref.session_date.strftime('%A') }}</strong><span>{{ booking.session_ref.session_date.strftime('%d %B %Y') }}</span></div><div><strong>5pm–8pm</strong><span>Film starts around 5:30–5:45pm</span></div><div><strong>Artizan Street Library</strong><span>1 Artizan Street, London E1 7AF</span></div></div>
+    {% if email_sent %}<p>We sent a confirmation, cancellation link and calendar file to <strong>{{ booking.email }}</strong>.</p>{% else %}<p>Your booking is saved. Email delivery is not currently configured, so please save the details below.</p>{% endif %}
+    <div class="button-row"><a class="button primary" href="{{ calendar_url }}" target="_blank" rel="noopener">Add to Google Calendar</a><a class="button secondary" href="{{ url_for('film_club_calendar', token=booking.cancel_token) }}">Download calendar file</a></div>
+    {% if booking.interested_in_nominating %}<p class="gentle-prompt">You said you may like to choose a future film. <a href="{{ url_for('film_club_nominate') }}">Make a nomination now</a>, or come back whenever you are ready.</p>{% endif %}
+    <a class="text-link" href="{{ url_for('film_club_home') }}">Return to Film Club</a>
+</section>
+{% endblock %}

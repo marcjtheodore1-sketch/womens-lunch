@@ -1,0 +1,27 @@
+{% extends "portal_base.html" %}
+{% block title %}Nominate a film | Autistic Film Club{% endblock %}
+{% block body_class %}film-page form-page{% endblock %}
+{% block content %}
+<section class="page-shell form-shell">
+    <a class="back-link" href="{{ url_for('film_club_home') }}">← Back to Film Club</a>
+    {% if from_booking %}<div class="booking-complete-notice" role="status"><strong>✓ Your Film Club place is booked.</strong><p>Now tell us about the film you would like the group to consider for a future month.</p></div>{% endif %}
+    <div class="form-heading"><p class="eyebrow">Your choice could be next</p><h1>Nominate a film</h1><p>Tell us about a film you care about. If we select it, you can introduce it to the group for a few minutes. If you cannot attend, a volunteer can share your introduction for you.</p></div>
+    <form method="post" class="accessible-form">
+        <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+        <fieldset><legend>About you</legend>
+            <div class="field"><label for="nominator_name">Your name <span>*</span></label><input id="nominator_name" name="nominator_name" required maxlength="200" autocomplete="name"></div>
+            <div class="field"><label for="nominator_email">Your email address <span>*</span></label><input id="nominator_email" name="nominator_email" required type="email" maxlength="254" autocomplete="email"></div>
+            <div class="field"><span class="field-label">Are you aged 18 or over? <span>*</span></span><label class="choice"><input type="radio" name="is_adult" value="yes" required> Yes</label><label class="choice"><input type="radio" name="is_adult" value="no" required> No</label></div>
+        </fieldset>
+        <fieldset><legend>Your film</legend>
+            <div class="field"><label for="film_title">Film title <span>*</span></label><input id="film_title" name="film_title" required maxlength="240"></div>
+            <div class="field"><label for="why_this_film">Why do you love or care about this film? <span>*</span></label><textarea id="why_this_film" name="why_this_film" rows="6" required></textarea><small>You could mention a special interest, a personal connection, or something you hope the group will notice.</small></div>
+            <div class="field"><label for="introduction_notes">What might you say when introducing it?</label><textarea id="introduction_notes" name="introduction_notes" rows="5"></textarea><small>Notes are completely fine. A volunteer can read or adapt these if you cannot be there.</small></div>
+            <div class="field"><span class="field-label">Would you like to introduce the film if it is selected?</span><label class="choice"><input type="radio" name="can_introduce" value="yes" checked> Yes, if I can attend</label><label class="choice"><input type="radio" name="can_introduce" value="no"> I would prefer a volunteer to introduce it</label></div>
+            <div class="field"><label for="availability_notes">Are there any months you cannot attend?</label><textarea id="availability_notes" name="availability_notes" rows="3"></textarea></div>
+            <div class="field"><label for="content_notes">Is there anything important for us to know about the film's content?</label><textarea id="content_notes" name="content_notes" rows="4" placeholder="For example: intense scenes, flashing images, or sensitive themes"></textarea></div>
+        </fieldset>
+        <button class="button primary submit-button" type="submit">Send my nomination</button>
+    </form>
+</section>
+{% endblock %}

@@ -1,0 +1,4 @@
+{% extends "portal_base.html" %}
+{% block title %}Cancel Film Club booking | LAGC{% endblock %}
+{% block body_class %}film-page form-page{% endblock %}
+{% block content %}<section class="page-shell message-shell"><p class="eyebrow">Manage your booking</p><h1>Cancel your Film Club place?</h1>{% if booking.cancelled_at %}<p>This booking has already been cancelled.</p>{% else %}<div class="confirmation-ticket"><div><strong>{{ booking.session_ref.session_date.strftime('%A %d %B %Y') }}</strong><span>5pm–8pm</span></div><div><strong>{{ booking.full_name }}</strong><span>{{ booking.email }}</span></div></div><p>Cancelling will release the place for somebody else.</p><form method="post"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><button class="button danger" type="submit">Yes, cancel my place</button> <a class="button secondary" href="{{ url_for('film_club_home') }}">Keep my place</a></form>{% endif %}</section>{% endblock %}

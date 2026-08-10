@@ -38,8 +38,6 @@ html {
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: var(--bg);
-    background-image: linear-gradient(180deg, #f0fff4 0%, #ffffff 55%, #f0fff4 100%);
-    background-attachment: fixed;
     color: var(--text);
     line-height: 1.65;
     min-height: 100vh;
@@ -283,48 +281,8 @@ p {
 }
 
 .landing-header h1 {
-    font-size: 3.6rem; /* ~20% larger than the previous 3rem */
-    font-weight: 700;
-    color: #276749; /* fallback for browsers without background-clip support */
-    background: linear-gradient(
-        110deg,
-        #276749 0%,
-        #48bb78 35%,
-        #68d391 50%,
-        #48bb78 65%,
-        #276749 100%
-    );
-    background-size: 240% 240%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation:
-        headerRadiate 9s ease-in-out infinite,
-        headerGlow 4.5s ease-in-out infinite;
-}
-
-/* Gentle swirling / radiating fill — only the gradient moves; the text stays put */
-@keyframes headerRadiate {
-    0%   { background-position: 0% 50%; }
-    25%  { background-position: 50% 0%; }
-    50%  { background-position: 100% 50%; }
-    75%  { background-position: 50% 100%; }
-    100% { background-position: 0% 50%; }
-}
-
-/* Soft radiant glow that gently breathes in and out */
-@keyframes headerGlow {
-    0%, 100% { filter: drop-shadow(0 0 4px rgba(72, 187, 120, 0.18)); }
-    50%      { filter: drop-shadow(0 0 11px rgba(72, 187, 120, 0.34)); }
-}
-
-/* Respect users who prefer reduced motion (important for a neuroaffirming space) */
-@media (prefers-reduced-motion: reduce) {
-    .landing-header h1 {
-        animation: none;
-        background-position: 50% 50%;
-        filter: drop-shadow(0 0 5px rgba(72, 187, 120, 0.25));
-    }
+    color: #276749;
+    font-size: 3rem;
 }
 
 .landing-content {
@@ -349,12 +307,6 @@ p {
     margin: 2rem 0;
     border-radius: var(--radius);
     box-shadow: var(--shadow-sm);
-    transition: var(--transition);
-}
-
-.initiative-description:hover {
-    box-shadow: var(--shadow);
-    transform: translateY(-2px);
 }
 
 .initiative-description p {
@@ -372,12 +324,6 @@ p {
     padding: 2rem;
     margin-bottom: 2rem;
     box-shadow: var(--shadow);
-    transition: var(--transition);
-}
-
-.lunch-details:hover {
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-2px);
 }
 
 .lunch-details h2 {
@@ -471,11 +417,6 @@ p {
     border: 2px solid var(--primary);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
-    transition: var(--transition);
-}
-
-.cta-section:hover {
-    box-shadow: 0 12px 28px -6px rgba(72, 187, 120, 0.28);
 }
 
 .cta-hint {
@@ -701,164 +642,6 @@ p {
 
 .summary-row:last-child {
     border-bottom: none;
-}
-
-/* ============================================
-   SUPPORT NEEDS / CARERS NOTICE (public pages)
-   ============================================ */
-
-.support-notice {
-    background: var(--card-bg);
-    border: 2px solid var(--primary);
-    border-left: 5px solid var(--primary-dark);
-    border-radius: var(--radius-lg);
-    padding: 1.75rem 2rem;
-    margin-bottom: 2rem;
-    box-shadow: var(--shadow);
-}
-
-.support-notice h2 {
-    color: #276749;
-    margin-bottom: 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-.support-notice p {
-    margin-bottom: 0.85rem;
-}
-
-.support-notice p:last-child {
-    margin-bottom: 0;
-}
-
-.support-notice-footnote {
-    color: var(--text-light);
-    font-size: 0.95rem;
-    font-style: italic;
-    padding-top: 0.5rem;
-    border-top: 1px solid var(--border);
-}
-
-/* ============================================
-   VOLUNTEER REMINDER (admin area)
-   ============================================ */
-
-.volunteer-reminder {
-    background: #ebf8ff;
-    border: 1.5px solid #bee3f8;
-    border-left: 5px solid #4299e1;
-    border-radius: var(--radius-lg);
-    padding: 1.5rem 1.75rem;
-    margin-bottom: 1.75rem;
-    color: #2a4365;
-}
-
-.volunteer-reminder h3 {
-    color: #2c5282;
-    margin-bottom: 0.85rem;
-    font-size: 1.1rem;
-}
-
-.volunteer-reminder p {
-    margin-bottom: 0.75rem;
-    font-size: 0.95rem;
-}
-
-.volunteer-reminder ul {
-    margin: 0 0 0.85rem;
-    padding-left: 1.35rem;
-}
-
-.volunteer-reminder li {
-    margin-bottom: 0.45rem;
-    font-size: 0.95rem;
-}
-
-.volunteer-reminder-principles {
-    list-style: none;
-    padding-left: 0;
-}
-
-.volunteer-reminder-principles li {
-    position: relative;
-    padding: 0.3rem 0 0.3rem 1.6rem;
-    margin-bottom: 0.2rem;
-}
-
-.volunteer-reminder-principles li::before {
-    content: '✓';
-    position: absolute;
-    left: 0;
-    color: #2b6cb0;
-    font-weight: 700;
-}
-
-.volunteer-reminder-emergency {
-    background: #fff5f5;
-    border: 1.5px solid #feb2b2;
-    border-left: 4px solid var(--danger-dark);
-    border-radius: var(--radius);
-    padding: 0.9rem 1.1rem;
-    margin: 1rem 0 1.25rem;
-    color: #822727;
-}
-
-.volunteer-reminder-escalate {
-    margin-bottom: 0;
-    padding-top: 0.75rem;
-    border-top: 1px solid #bee3f8;
-}
-
-/* ============================================
-   SAFEGUARDING NOTICE
-   ============================================ */
-
-.safeguarding-notice {
-    background: #fff3cd;
-    border-left: 4px solid var(--warning);
-    padding: 1.25rem 1.5rem;
-    border-radius: var(--radius);
-    margin-bottom: 1.5rem;
-    color: #856404;
-}
-
-.safeguarding-notice p {
-    margin-bottom: 0.5rem;
-}
-
-.safeguarding-notice ul {
-    margin: 0;
-    padding-left: 1.25rem;
-}
-
-.safeguarding-notice li {
-    margin-bottom: 0.5rem;
-    font-size: 0.95rem;
-}
-
-.safeguarding-notice li:last-child {
-    margin-bottom: 0;
-}
-
-/* Admin: carer / support worker flag on a booking */
-.companion-flag {
-    display: block;
-    margin-top: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    background: #fff3cd;
-    border-left: 3px solid var(--warning);
-    border-radius: var(--radius-sm);
-    color: #856404;
-    font-size: 0.82rem;
-    line-height: 1.5;
-}
-
-.companion-flag.missing-ack {
-    background: #fed7d7;
-    border-left-color: var(--danger-dark);
-    color: #822727;
 }
 
 /* ============================================
@@ -1337,12 +1120,6 @@ p {
     margin: 0 auto 1.5rem;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow);
-    transition: var(--transition);
-}
-
-.landing-logo:hover {
-    transform: scale(1.02);
-    box-shadow: var(--shadow-lg);
 }
 
 /* ============================================
@@ -1375,7 +1152,7 @@ p {
     }
 
     .landing-header h1 {
-        font-size: 2.7rem; /* ~20% larger than the previous 2.25rem */
+        font-size: 2.25rem;
     }
 
     .form-step {

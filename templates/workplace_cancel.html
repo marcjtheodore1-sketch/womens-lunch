@@ -1,0 +1,4 @@
+{% extends "portal_base.html" %}
+{% block title %}Cancel registration | Workplace Support{% endblock %}
+{% block body_class %}workplace-page{% endblock %}
+{% block content %}<section class="message-shell page-shell"><div class="message-icon">?</div><h1>Cancel your registration?</h1>{% if booking.cancelled_at %}<p>This registration has already been cancelled.</p>{% else %}<p>{{ booking.full_name }}, this will release {{ workplace_party_size(booking) }} place{% if workplace_party_size(booking) != 1 %}s{% endif %} for the session on {{ booking.session_ref.session_date.strftime('%A %d %B %Y') }}.</p><form method="post"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><button class="button danger" type="submit">Yes, cancel my registration</button></form>{% endif %}<p><a class="text-link" href="{{ url_for('workplace_home') }}">Back to Workplace Support</a></p></section>{% endblock %}

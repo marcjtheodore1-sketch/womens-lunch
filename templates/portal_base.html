@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="description" content="{% block description %}Accessible activities from London Autism Group Charity.{% endblock %}">
+    <title>{% block title %}London Autism Group Charity Activities{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/portal.css') }}">
+</head>
+<body class="{% block body_class %}{% endblock %}">
+    {% set is_workplace = request.path.startswith('/workplace-support') or request.path.startswith('/admin/workplace-support') or request.args.get('next') == '/admin/workplace-support' %}
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <header class="site-header">
+        <a class="site-identity" href="{{ url_for('landing') }}" aria-label="London Autism Group Charity activities home">
+            <img src="{{ url_for('static', filename='images/charity_logo.jpg') }}" alt="London Autism Group Charity">
+            <span>LAGC Registration Activities</span>
+        </a>
+        <nav aria-label="Main navigation">
+            <a href="{{ url_for('landing') }}">Registration activities</a>
+            <a href="{{ url_for('film_club_home') }}">Film Club</a>
+            <a href="{{ url_for('workplace_home') }}">AWSS</a>
+            <a href="{{ url_for('womens_lunch_landing') }}">Women's Lunch</a>
+            <a href="https://cafdonate.cafonline.org/30442" target="_blank" rel="noopener">Donate</a>
+            {% if request.endpoint != 'landing' %}
+            {% if is_workplace %}<a href="{{ url_for('workplace_admin') }}">Admin</a>{% else %}<a href="{{ url_for('film_club_admin') }}">Film Club admin</a>{% endif %}
+            {% endif %}
+        </nav>
+    </header>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="flash-stack" aria-live="polite">
+        {% for category, message in messages %}<p class="flash {{ category }}">{{ message }}</p>{% endfor %}
+      </div>
+      {% endif %}
+    {% endwith %}
+
+    <main id="main-content">{% block content %}{% endblock %}</main>
+
+    <footer class="site-footer">
+        <img src="{{ url_for('static', filename='images/charity_logo.jpg') }}" alt="">
+        <div>
+            <strong>London Autism Group Charity</strong>
+            <p>Community activities for autistic people in London.</p>
+            <a href="https://www.londonautismgroupcharity.org" target="_blank" rel="noopener">Visit the charity website</a>
+        </div>
+    </footer>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

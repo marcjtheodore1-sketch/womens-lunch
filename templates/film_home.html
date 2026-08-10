@@ -1,0 +1,108 @@
+{% extends "portal_base.html" %}
+{% block title %}Autistic Film Club | London Autism Group Charity{% endblock %}
+{% block description %}Book a place or nominate a film for the monthly LAGC Autistic Film Club at Artizan Street Library.{% endblock %}
+{% block body_class %}film-page{% endblock %}
+{% block content %}
+{% if news_items %}
+<section class="film-news-ticker" aria-label="Latest Film Club news">
+  <div class="page-shell news-ticker-inner">
+    <span class="news-label">Latest news</span>
+    <div class="news-slides" aria-live="polite">
+      {% for news in news_items %}<article class="news-slide" {% if not loop.first %}hidden{% endif %} data-news-slide><span class="news-emoji" aria-hidden="true">{{ news.emoji or '🎬' }}</span><p><strong>{{ news.headline }}</strong>{% if news.details %} {{ news.details }}{% endif %}{% if news.link_url %} <a href="{{ news.link_url }}"{% if news.link_url.startswith('http') %} target="_blank" rel="noopener"{% endif %}>{{ news.link_text }} →</a>{% endif %}</p></article>{% endfor %}
+    </div>
+    {% if news_items|length > 1 %}<button class="ticker-control" type="button" data-ticker-control aria-label="Pause news ticker" aria-pressed="false">Pause</button>{% endif %}
+  </div>
+</section>
+{% endif %}
+<section class="film-hero">
+    <div class="film-hero-copy">
+        <img class="film-club-logo" src="{{ url_for('static', filename='images/charity_logo.jpg') }}" alt="London Autism Group Charity">
+        <h1 class="glow-heading">Autistic Film Club</h1>
+        <p class="hero-lede">A monthly film screening for autistic adults, with an optional group discussion afterwards.</p>
+        <div class="hero-actions">
+            {% if session_cards %}<a class="button brand-button" href="#screenings">View dates and book</a>{% endif %}
+            <a class="button secondary" href="{{ url_for('film_club_nominate') }}">Nominate a film</a>
+        </div>
+    </div>
+</section>
+
+<section class="quick-facts" aria-label="Film Club key information">
+    <div><span class="fact-icon" aria-hidden="true">📅</span><p><strong>Third Wednesday</strong><br>of every month</p></div>
+    <div><span class="fact-icon" aria-hidden="true">🕐</span><p><strong>5pm–8pm</strong><br>film from 5:30–5:45pm</p></div>
+    <div><span class="fact-icon" aria-hidden="true">📍</span><p><strong>{{ venue_name }}</strong><br>{{ venue_address }}</p></div>
+    <div><span class="fact-icon" aria-hidden="true">🎫</span><p><strong>15 free places</strong><br>adults aged 18+</p></div>
+</section>
+
+<section class="story-section page-shell">
+    <div>
+        <h2>What happens at Film Club</h2>
+        <p class="story-intro">Our aim is to create a psychologically safe, autistic-neuroaffirming film screening environment. You can take part in the way that feels comfortable for you, with no pressure to socialise or speak in the discussion.</p>
+    </div>
+    <div class="story-steps">
+        <article><span aria-hidden="true">🚪</span><h3>Arrive from 5pm</h3><p>A volunteer will welcome you, show you to the room and give you time to settle in.</p></article>
+        <article><span aria-hidden="true">🥤</span><h3>Free snacks and drinks</h3><p>Snacks and drinks are provided free of charge. You are also welcome to bring your own.</p></article>
+        <article><span aria-hidden="true">👥</span><h3>At least two LAGC volunteers</h3><p>There will always be at least two charity volunteers on hand to welcome attendees, explain what is happening and support the environment.</p></article>
+        <article><span aria-hidden="true">💬</span><h3>Short introduction</h3><p>The person who nominated the film can explain why they chose it. A volunteer can do this if they cannot attend.</p></article>
+        <article><span aria-hidden="true">🎬</span><h3>Watch the film</h3><p>The film starts around 5:30–5:45pm. You can move around, use sensory items or step out if needed.</p></article>
+        <article><span aria-hidden="true">☕</span><h3>Optional discussion</h3><p>Volunteers facilitate a relaxed chat after the film. There is no pressure to speak. We finish by 8pm.</p></article>
+    </div>
+</section>
+
+<div class="page-shell public-guidelines-wrap">{% include '_community_guidelines.html' %}</div>
+
+<section id="screenings" class="screenings-section">
+    <div class="page-shell">
+        <div class="section-heading"><div><h2>Upcoming dates</h2></div><p>Each session has 15 places. Film titles will appear here once they are selected.</p></div>
+        <div class="screening-grid">
+        {% for card in session_cards %}
+            {% set item = card.session %}
+            <article class="screening-card{% if card.is_full or not item.is_bookable %} unavailable{% endif %}">
+                <div class="date-ticket"><strong>{{ item.session_date.strftime('%d') }}</strong><span>{{ item.session_date.strftime('%b')|upper }}<br>{{ item.session_date.strftime('%Y') }}</span></div>
+                <div class="screening-info">
+                    <p>{{ item.session_date.strftime('%A') }} · 5pm–8pm</p>
+                    <h3>{{ item.film_title or 'Film to be announced' }}</h3>
+                    {% if item.film_details %}<p class="film-details">{{ item.film_details }}</p>{% endif %}
+                    {% if card.is_full %}<span class="availability full">Fully booked</span>
+                    {% elif not item.is_bookable %}<span class="availability closed">Bookings closed</span>
+                    {% else %}<span class="availability">{{ card.places_left }} place{% if card.places_left != 1 %}s{% endif %} remaining</span>{% endif %}
+                </div>
+                {% if item.is_bookable and not card.is_full %}<a class="button primary small" href="{{ url_for('film_club_book', session_id=item.id) }}">Book this session</a>{% endif %}
+            </article>
+        {% else %}<p>No screenings are currently scheduled. Please check back soon.</p>{% endfor %}
+        </div>
+    </div>
+</section>
+
+<section class="nomination-banner page-shell">
+    <div><h2>Nominate a film</h2><p>Suggest a film and tell us why you chose it. If it is selected, you can introduce it yourself or ask a volunteer to introduce it for you.</p></div>
+    <a class="button brand-button" href="{{ url_for('film_club_nominate') }}">Nominate a film</a>
+</section>
+
+<section class="venue-section page-shell">
+    <div class="venue-copy">
+        <h2>Plan your visit</h2>
+        <h3>{{ venue_name }} and Community Centre</h3>
+        <p class="large-address">{{ venue_address }}</p>
+        <p>We expect to use the <strong>Multi Room</strong>, which has tables and chairs. We will confirm the room for each screening, and a volunteer will direct you when you arrive.</p>
+        <p><a class="text-link" href="https://www.cityoflondon.gov.uk/services/libraries/artizan-street-library" target="_blank" rel="noopener">Read the official venue information →</a></p>
+    </div>
+    <div class="venue-map">
+        <iframe title="Map showing Artizan Street Library and Community Centre" src="https://www.google.com/maps?q=Artizan+Street+Library+and+Community+Centre,+1+Artizan+Street,+London+E1+7AF&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        <a class="text-link" href="{{ map_url }}" target="_blank" rel="noopener">Open a larger map →</a>
+    </div>
+    <div class="visit-planning" aria-label="Planning your journey and access">
+        <article><span aria-hidden="true">🚇</span><h3>Public transport</h3><p>Aldgate station is about 180 metres away. Liverpool Street station is about 500 metres away.</p></article>
+        <article><span aria-hidden="true">♿</span><h3>Step-free access</h3><p>The main entrance is step-free. Lifts are available, and the first-floor community room is accessible by lift.</p></article>
+        <article><span aria-hidden="true">🚻</span><h3>Accessible toilets</h3><p>Wheelchair-accessible toilets are available on the ground and first floors. The first-floor accessible toilet uses a RADAR key.</p></article>
+        <article><span aria-hidden="true">🅿️</span><h3>Disabled parking</h3><p>Disabled parking is available on Gravel Lane, approximately 62 metres from the venue.</p></article>
+    </div>
+    <div class="venue-note-card"><h3>Access and sensory needs</h3><p>You can tell us about access or sensory needs, seating preferences, allergies and anything else that would help when you book.</p><p>Free snacks, drinks and sensory items will be available. You can bring your own too.</p></div>
+</section>
+{% endblock %}
+{% block scripts %}{% if news_items|length > 1 %}<script>
+const slides=[...document.querySelectorAll('[data-news-slide]')],control=document.querySelector('[data-ticker-control]');let current=0,timer=null,paused=false;
+function showNews(index){slides[current].hidden=true;current=index%slides.length;slides[current].hidden=false}
+function startTicker(){timer=setInterval(()=>showNews(current+1),8000)}
+control.addEventListener('click',()=>{paused=!paused;control.textContent=paused?'Play':'Pause';control.setAttribute('aria-label',paused?'Play news ticker':'Pause news ticker');control.setAttribute('aria-pressed',String(paused));if(paused)clearInterval(timer);else startTicker()});
+if(!matchMedia('(prefers-reduced-motion: reduce)').matches)startTicker();else{paused=true;control.textContent='Play';control.setAttribute('aria-pressed','true')}
+</script>{% endif %}{% endblock %}

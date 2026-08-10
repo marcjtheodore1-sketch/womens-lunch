@@ -1,6 +1,6 @@
-{% extends "base.html" %}
+{% extends "portal_base.html" %}
 
-{% block title %}Admin Login - LAGC Autistic Women's Lunch{% endblock %}
+{% block title %}Admin Login - LAGC Activities{% endblock %}
 
 {% block content %}
 <div class="admin-login-page">
@@ -10,6 +10,8 @@
         <p class="error-text">{{ error }}</p>
         {% endif %}
         <form method="POST" action="/admin/login">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="next" value="{{ next_url }}">
             <div class="form-group">
                 <label for="password">Password:</label>
                 <input type="password" id="password" name="password" required autofocus>

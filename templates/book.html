@@ -45,25 +45,6 @@
             </div>
         </div>
 
-        <div class="support-notice">
-            <h2>🤝 Support needs and carers</h2>
-            <p>
-                <strong>Our volunteers are hosts, not carers.</strong> They are not able to provide personal care,
-                one-to-one support, or supervision.
-            </p>
-            <p>
-                <strong>If you need that kind of support during the day, you will need to bring someone with you
-                who provides it</strong> — a carer, support worker, family member or friend.
-            </p>
-            <p>
-                Please don't attend on your own if you need that level of support: we aren't equipped for it,
-                and it isn't safe for you.
-            </p>
-            <p class="support-notice-footnote">
-                The form below asks whether someone is coming with you, so we know who to expect on the day.
-            </p>
-        </div>
-
         <hr class="section-divider">
 
         <!-- Booking Form -->
@@ -98,7 +79,6 @@
                 <div class="form-group">
                     <label for="email">Email Address *</label>
                     <input type="email" id="email" required>
-                    <small style="display:block; margin-top:0.4rem; color:var(--text-light);">We'll email your confirmation here. If it doesn't arrive, please check your spam/junk folder.</small>
                 </div>
                 <div class="form-group">
                     <label for="phone">Phone Number (optional)</label>
@@ -148,56 +128,6 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>Is anyone coming with you, such as a carer or support worker? *</label>
-                    <div class="radio-group">
-                        <label class="radio-label">
-                            <input type="radio" name="bringing-companion" value="no" checked onchange="toggleCompanionFields()">
-                            No, I'm coming on my own
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="bringing-companion" value="yes" onchange="toggleCompanionFields()">
-                            Yes, a carer or support worker is coming with me
-                        </label>
-                    </div>
-                </div>
-
-                <div id="companion-details" class="hidden">
-                    <div class="safeguarding-notice">
-                        <p><strong>Please read before continuing</strong></p>
-                        <ul>
-                            <li>Carers and support workers <strong>remain responsible for actively supervising</strong> the person they attend with, for the whole event.</li>
-                            <li>LAGC volunteers <strong>cannot act as substitute carers</strong> and cannot provide personal care, behavioural support, or one-to-one supervision.</li>
-                            <li>Failure to disclose relevant supervision or risk information <strong>may affect whether someone can attend future events</strong>.</li>
-                        </ul>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="companion-name">Carer / support worker full name *</label>
-                        <input type="text" id="companion-name">
-                    </div>
-                    <div class="form-group">
-                        <label for="companion-agency">Agency / organisation name *</label>
-                        <input type="text" id="companion-agency" placeholder="If they are a family member or independent, please write 'Family' or 'Independent'">
-                    </div>
-                    <div class="form-group">
-                        <label for="companion-mobile">Carer / support worker mobile number *</label>
-                        <input type="tel" id="companion-mobile">
-                        <small style="display:block; margin-top:0.4rem; color:var(--text-light);">So we can contact them during the event if needed.</small>
-                    </div>
-                    <div class="form-group">
-                        <label for="companion-other-names">Names of anyone else attending with you (optional)</label>
-                        <textarea id="companion-other-names" rows="2" placeholder="Please list the full name of anyone else coming with you"></textarea>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="radio-label" for="supervision-ack">
-                            <input type="checkbox" id="supervision-ack">
-                            <span>I confirm that the carer or support worker named above understands they <strong>remain responsible for actively supervising</strong> the person they attend with throughout the event, and that LAGC volunteers cannot provide personal care, behavioural support, or one-to-one supervision. *</span>
-                        </label>
-                    </div>
-                </div>
-
-                <div class="form-group">
                     <label for="additional-info">Anything else we should know?</label>
                     <textarea id="additional-info" rows="3" placeholder="e.g., Accessibility needs, I'll be arriving late, I'm nervous about meeting new people"></textarea>
                 </div>
@@ -213,10 +143,6 @@
             <!-- Step 4: Confirmation -->
             <div class="form-step hidden" id="step-confirmation">
                 <h2>✅ Booking Confirmed!</h2>
-                <div style="background:#fff3cd; border-left:4px solid #f6ad55; padding:1rem 1.25rem; border-radius:var(--radius); margin-bottom:1.5rem; color:#856404;">
-                    <strong>📧 Please check your spam or junk folder.</strong><br>
-                    Your confirmation email is on its way from <strong>wg.lagc@gmail.com</strong>. It sometimes lands in spam, so please look there too and mark it as "Not spam" so you don't miss any updates.
-                </div>
                 <div class="confirmation-message" id="confirmation-message"></div>
                 <div class="step-actions">
                     <button class="btn btn-primary" onclick="resetBooking()">Make Another Booking</button>
@@ -243,7 +169,7 @@
     const hasAccess = sessionStorage.getItem('womensLunchAccess') === 'granted';
     if (!hasAccess) {
         // Redirect to access page if no access
-        window.location.href = '/access';
+        window.location.href = '/womens-lunch/access';
     } else {
         // Show protected content
         document.getElementById('protected-content').style.display = 'block';

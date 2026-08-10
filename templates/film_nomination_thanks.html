@@ -1,0 +1,4 @@
+{% extends "portal_base.html" %}
+{% block title %}Film nomination received | LAGC{% endblock %}
+{% block body_class %}film-page form-page{% endblock %}
+{% block content %}<section class="page-shell message-shell success-shell"><div class="message-icon" aria-hidden="true">★</div><p class="eyebrow">Nomination received</p><h1>Thank you for choosing {{ nomination.film_title }}</h1><p>Our team will review your suggestion while planning future months. If it is selected, we will contact you about the date and how you would like it introduced.</p><a class="button primary" href="{{ url_for('film_club_home') }}">Return to Film Club</a></section>{% endblock %}

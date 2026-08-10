@@ -1,0 +1,71 @@
+{% extends "portal_base.html" %}
+{% block title %}Activities | London Autism Group Charity{% endblock %}
+{% block description %}Choose an accessible London Autism Group Charity community activity and book your place.{% endblock %}
+{% block body_class %}gateway-page{% endblock %}
+{% block content %}
+<section class="gateway-hero">
+    <img src="{{ url_for('static', filename='images/charity_logo.jpg') }}" alt="London Autism Group Charity" class="gateway-logo">
+    <h1 class="glow-heading">Registration-based LAGC activities</h1>
+    <p>These London Autism Group Charity activities run regularly and require you to register before attending. Choose an activity to find out more and book a place.</p>
+</section>
+
+<section class="activity-section page-shell" aria-label="Registration-based activities">
+    <div class="activity-grid">
+    <a class="activity-card fridays-card" href="https://milestheodore.pythonanywhere.com/" target="_blank" rel="noopener noreferrer">
+        <h2 class="activity-glow-title fridays-glow">Fridays at Farringdon</h2>
+        <p>A weekly neuroaffirming space where autistic adults can socialise, work, study or spend time independently.</p>
+        <div class="activity-details">
+            <span>📅 Fridays, typically weekly</span>
+            <span>📍 Farringdon, central London</span>
+            <span>✨ Also includes free Autistic Student Support and Yoga Sessions</span>
+        </div>
+        <span class="button fridays-button">Open Fridays at Farringdon ↗</span>
+    </a>
+
+    <a class="activity-card film-card" href="{{ url_for('film_club_home') }}" target="_blank" rel="noopener noreferrer">
+        <h2 class="activity-glow-title film-glow">Autistic Film Club</h2>
+        <p>Monthly film screenings for autistic adults, followed by an optional group discussion.</p>
+        <div class="activity-details">
+            <span>📅 Third Wednesday of each month</span>
+            <span>🕐 5pm–8pm</span>
+            <span>📍 Artizan Street Library, Aldgate</span>
+        </div>
+        <span class="button brand-button">View Film Club ↗</span>
+    </a>
+
+    <a class="activity-card workplace-card" href="{{ url_for('workplace_home') }}" target="_blank" rel="noopener noreferrer">
+        <h2 class="activity-glow-title workplace-glow">Autistic Workplace Support Sessions</h2>
+        <p>Free autistic-led employment mentoring and supportive group discussion for autistic adults.</p>
+        <div class="activity-details">
+            <span>📅 Last Saturday of each month</span>
+            <span>🕐 1pm–4pm</span>
+            <span>📍 King Square Community Centre, Islington</span>
+        </div>
+        <span class="button workplace-button">View Workplace Support ↗</span>
+    </a>
+
+    <a class="activity-card lunch-card" href="{{ url_for('womens_lunch_landing') }}" target="_blank" rel="noopener noreferrer">
+        <h2 class="activity-glow-title lunch-glow">Autistic Women's Lunch</h2>
+        <p>A monthly lunch for autistic women aged 18 and over, with food and a non-alcoholic drink covered by the charity.</p>
+        <div class="activity-details">
+            <span>📅 Monthly Saturday lunch</span>
+            <span>🕐 12pm–1pm</span>
+            <span>📍 Cittie of Yorke, Holborn</span>
+        </div>
+        <span class="button brand-button">View Women's Lunch ↗</span>
+    </a>
+
+    <a class="activity-card strolling-card" href="https://swn-londonautismgroupcharity.pythonanywhere.com/" target="_blank" rel="noopener noreferrer">
+        <h2 class="activity-glow-title strolling-glow">Strolling with Neurokin</h2>
+        <p>Gentle, inclusive strolls through London for autistic people and the wider autism community.</p>
+        <div class="activity-details">
+            <span>📅 Regular scheduled strolls</span>
+            <span>📍 Multiple London locations</span>
+            <span>🎫 Free · registration required</span>
+        </div>
+        <span class="button strolling-button">Open Strolling with Neurokin ↗</span>
+    </a>
+
+    </div>
+</section>
+{% endblock %}

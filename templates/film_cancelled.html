@@ -1,0 +1,4 @@
+{% extends "portal_base.html" %}
+{% block title %}Film Club booking cancelled | LAGC{% endblock %}
+{% block body_class %}film-page form-page{% endblock %}
+{% block content %}<section class="page-shell message-shell"><div class="message-icon" aria-hidden="true">✓</div><p class="eyebrow">Cancellation complete</p><h1>Your place has been cancelled</h1><p>Thank you for letting us know, {{ booking.full_name }}. The place is now available for somebody else.</p><a class="button primary" href="{{ url_for('film_club_home') }}">View other Film Club dates</a></section>{% endblock %}

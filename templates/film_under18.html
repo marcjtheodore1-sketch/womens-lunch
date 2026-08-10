@@ -1,0 +1,4 @@
+{% extends "portal_base.html" %}
+{% block title %}Film Club is for adults | LAGC{% endblock %}
+{% block body_class %}film-page form-page{% endblock %}
+{% block content %}<section class="page-shell message-shell"><div class="message-icon" aria-hidden="true">18+</div><p class="eyebrow">Thanks for checking</p><h1>This Film Club is for adults</h1><p>We cannot take registrations from anyone under 18. If you would like information about other activities or support, please contact London Autism Group Charity.</p><div class="button-row"><a class="button primary" href="https://www.londonautismgroupcharity.org" target="_blank" rel="noopener">Visit the charity website</a><a class="button secondary" href="{{ url_for('landing') }}">See other activities</a></div></section>{% endblock %}

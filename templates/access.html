@@ -48,14 +48,14 @@
 
         <!-- Back Link -->
         <div class="back-link">
-            <a href="/">← Back to Home</a>
+            <a href="/womens-lunch">← Back to Home</a>
         </div>
     </div>
 </div>
 
 <script>
-// Access code - change this to your desired code (stored uppercase; entry is case-insensitive)
-const VALID_ACCESS_CODE = 'LAGCLUNCH';
+// Access code - change this to your desired code
+const VALID_ACCESS_CODE = 'LAGC2026';
 
 function checkAccessCode() {
     const codeInput = document.getElementById('access-code');
@@ -66,7 +66,7 @@ function checkAccessCode() {
         // Store in session that user has access
         sessionStorage.setItem('womensLunchAccess', 'granted');
         // Redirect to booking page
-        window.location.href = '/book';
+        window.location.href = '/womens-lunch/book';
     } else {
         // Show error
         errorText.classList.remove('hidden');

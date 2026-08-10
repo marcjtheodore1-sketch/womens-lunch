@@ -6,21 +6,10 @@ path = os.path.dirname(os.path.abspath(__file__))
 if path not in sys.path:
     sys.path.insert(0, path)
 
-# Email configuration - MUST be set BEFORE importing Flask app
-os.environ['ENABLE_EMAIL'] = 'true'
-os.environ['SMTP_HOST'] = 'smtp.gmail.com'
-os.environ['SMTP_PORT'] = '587'
-os.environ['SMTP_USER'] = 'wg.lagc@gmail.com'
-os.environ['SMTP_PASSWORD'] = 'hqeqxqzaecqopdyt'
-os.environ['SMTP_FROM'] = 'wg.lagc@gmail.com'
+# Import and initialise the Flask app. ``create_all`` only adds missing tables,
+# so the existing Women's Lunch data remains untouched.
+from app import app as application, db, init_default_data
 
-# Debug - verify environment variables are set
-print(f"[WSGI] ENABLE_EMAIL set to: {os.environ.get('ENABLE_EMAIL')}")
-print(f"[WSGI] SMTP_USER set to: {os.environ.get('SMTP_USER')}")
-
-# Import the Flask app
-from app import app as application
-
-# Verify Flask config received the values
-print(f"[WSGI] Flask ENABLE_EMAIL: {application.config.get('ENABLE_EMAIL')}")
-print(f"[WSGI] Flask SMTP_USER: {application.config.get('SMTP_USER')}")
+with application.app_context():
+    db.create_all()
+    init_default_data()

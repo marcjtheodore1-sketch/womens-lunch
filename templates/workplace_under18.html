@@ -1,0 +1,4 @@
+{% extends "portal_base.html" %}
+{% block title %}Adults only | Workplace Support{% endblock %}
+{% block body_class %}workplace-page{% endblock %}
+{% block content %}<section class="message-shell page-shell"><div class="message-icon">18+</div><h1>These sessions are for adults</h1><p>Autistic Workplace Support Sessions are currently open to people aged 18 or over, so we cannot complete this registration.</p><p>If you would like information about other London Autism Group Charity activities or support, please email <a class="text-link" href="mailto:londonautismgroupcharity@gmail.com">londonautismgroupcharity@gmail.com</a>.</p><a class="button primary" href="{{ url_for('workplace_home') }}">Back to Workplace Support</a></section>{% endblock %}

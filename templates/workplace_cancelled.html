@@ -1,0 +1,4 @@
+{% extends "portal_base.html" %}
+{% block title %}Registration cancelled | Workplace Support{% endblock %}
+{% block body_class %}workplace-page{% endblock %}
+{% block content %}<section class="message-shell page-shell"><div class="message-icon">✓</div><h1>Your registration is cancelled</h1><p>Your place for {{ booking.session_ref.session_date.strftime('%A %d %B %Y') }} has been released. Thank you for letting us know.</p><a class="button primary" href="{{ url_for('workplace_home') }}">View other sessions</a></section>{% endblock %}
