@@ -101,9 +101,16 @@ button, input, textarea, select { font: inherit; }
   padding: 2.25rem max(1rem, calc((100% - 1120px) / 2));
   display: flex;
   align-items: center;
-  gap: 1rem;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1.25rem 2rem;
   background: var(--brand-purple);
   color: white;
+}
+.footer-identity {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
 }
 .site-footer img {
   width: 64px;
@@ -112,9 +119,32 @@ button, input, textarea, select { font: inherit; }
   object-fit: contain;
   background: white;
   border-radius: 7px;
+  flex-shrink: 0;
 }
 .site-footer p { margin: .1rem 0; color: #eee8ff; }
 .site-footer a { color: white; font-weight: 700; }
+.footer-links {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .6rem 1.5rem;
+}
+.footer-links a {
+  text-decoration: none;
+  border-bottom: 2px solid rgba(255, 255, 255, .45);
+  padding-bottom: 2px;
+}
+.footer-links a:hover { border-bottom-color: white; }
+.footer-donate {
+  border: 2px solid white;
+  border-radius: 999px;
+  padding: .45rem 1.1rem;
+  white-space: nowrap;
+}
+.footer-donate:hover {
+  background: white;
+  color: var(--brand-purple);
+}
 
 .flash-stack { width: min(900px, calc(100% - 2rem)); margin: 1rem auto -1rem; }
 .flash {
@@ -598,8 +628,12 @@ input, textarea, select {
 .choice-grid .choice { min-height: 52px; padding: .75rem 1rem; align-items: center; background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 8px; }
 .conditional-fields { margin: .9rem 0; padding: 1rem 1.15rem; background: #fbfafc; border-left: 4px solid var(--film-blue); border-radius: 0 9px 9px 0; }
 .conditional-fields.nested { background: white; border: 2px solid #c8d5e3; border-radius: 9px; }
-.support-boundary-notice { margin-top: 1.25rem; padding: 1rem 1.15rem; color: #693317; background: #fff8df; border: 2px solid #e9ae25; border-radius: 9px; }
-.support-boundary-notice h3 { margin: 0 0 .4rem; color: #71320f; font-size: 1rem; }
+/* Calm, informative panel rather than a warning — the point still needs to be
+   clear, but it should not read as a telling-off. */
+.support-boundary-notice { margin-top: 1.25rem; padding: 1rem 1.15rem; color: #333c4e; background: #f5f7fb; border: 2px solid #b9c3d6; border-radius: 9px; }
+.support-boundary-notice h3 { margin: 0 0 .4rem; color: #2b3446; font-size: 1rem; }
+.support-boundary-notice p { margin: .4rem 0 0; }
+.support-boundary-notice p:first-of-type { margin-top: .2rem; }
 .support-boundary-notice ul { margin: .35rem 0 0; padding-left: 1.25rem; }
 .support-boundary-notice li + li { margin-top: .35rem; }
 .support-acknowledgement { border: 2px solid var(--film-blue); }
@@ -791,10 +825,25 @@ th { background: #f1f5f9; font-size: .73rem; text-transform: uppercase; letter-s
 }
 
 @media (max-width: 720px) {
-  .site-header { align-items: flex-start; flex-direction: column; gap: .4rem; }
-  .site-header nav { padding-bottom: .4rem; gap: .55rem 1rem; }
-  .site-header nav a { font-size: .84rem; }
-  .site-identity img { width: 48px; height: 48px; }
+  .site-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 0;
+    padding-block: .5rem;
+  }
+  .site-identity { align-self: flex-start; padding-block: .15rem; }
+  .site-identity img { width: 46px; height: 46px; }
+  .site-header nav {
+    width: 100%;
+    margin-top: .5rem;
+    padding-top: .55rem;
+    gap: 0 1.1rem;
+    border-top: 1px solid rgba(255, 255, 255, .28);
+  }
+  .site-header nav a {
+    font-size: .9rem;
+    padding-block: .4rem;   /* comfortable tap targets */
+  }
   .gateway-hero { padding-top: 3.2rem; }
   .activity-grid, .admin-choice-grid { grid-template-columns: 1fr; }
   .activity-card.strolling-card { grid-column: auto; width: 100%; }
@@ -816,7 +865,9 @@ th { background: #f1f5f9; font-size: .73rem; text-transform: uppercase; letter-s
   .news-admin-item { grid-template-columns: 1fr; }
   .news-actions { flex-wrap: wrap; }
   .nomination-title { flex-direction: column; }
-  .site-footer { align-items: flex-start; }
+  .site-footer { align-items: flex-start; flex-direction: column; gap: 1.25rem; }
+  .site-footer img { width: 52px; height: 52px; }
+  .footer-links { gap: .75rem 1.25rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

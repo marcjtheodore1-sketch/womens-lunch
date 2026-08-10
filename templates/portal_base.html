@@ -15,18 +15,18 @@
     {% set is_workplace = request.path.startswith('/workplace-support') or request.path.startswith('/admin/workplace-support') or request.args.get('next') == '/admin/workplace-support' %}
     <a class="skip-link" href="#main-content">Skip to main content</a>
     <header class="site-header">
-        <a class="site-identity" href="{{ url_for('landing') }}" aria-label="London Autism Group Charity activities home">
+        <a class="site-identity" href="{{ url_for('landing') }}" aria-label="London Autism Group Charity registration activities home">
             <img src="{{ url_for('static', filename='images/charity_logo.jpg') }}" alt="London Autism Group Charity">
-            <span>LAGC Registration Activities</span>
         </a>
         <nav aria-label="Main navigation">
             <a href="{{ url_for('landing') }}">Registration activities</a>
             <a href="{{ url_for('film_club_home') }}">Film Club</a>
             <a href="{{ url_for('workplace_home') }}">AWSS</a>
             <a href="{{ url_for('womens_lunch_landing') }}">Women's Lunch</a>
+            <a href="https://www.londonautismgroupcharity.org/#newsletter" target="_blank" rel="noopener">Newsletter</a>
             <a href="https://cafdonate.cafonline.org/30442" target="_blank" rel="noopener">Donate</a>
             {% if request.endpoint != 'landing' %}
-            {% if is_workplace %}<a href="{{ url_for('workplace_admin') }}">Admin</a>{% else %}<a href="{{ url_for('film_club_admin') }}">Film Club admin</a>{% endif %}
+            {% if is_workplace %}<a href="{{ url_for('workplace_admin') }}">Admin</a>{% else %}<a href="{{ url_for('film_club_admin') }}">Admin</a>{% endif %}
             {% endif %}
         </nav>
     </header>
@@ -42,12 +42,18 @@
     <main id="main-content">{% block content %}{% endblock %}</main>
 
     <footer class="site-footer">
-        <img src="{{ url_for('static', filename='images/charity_logo.jpg') }}" alt="">
-        <div>
-            <strong>London Autism Group Charity</strong>
-            <p>Community activities for autistic people in London.</p>
-            <a href="https://www.londonautismgroupcharity.org" target="_blank" rel="noopener">Visit the charity website</a>
+        <div class="footer-identity">
+            <img src="{{ url_for('static', filename='images/charity_logo.jpg') }}" alt="">
+            <div>
+                <strong>London Autism Group Charity</strong>
+                <p>Community activities for autistic people in London.</p>
+            </div>
         </div>
+        <nav class="footer-links" aria-label="Charity links">
+            <a href="https://www.londonautismgroupcharity.org" target="_blank" rel="noopener">Charity website</a>
+            <a href="https://www.londonautismgroupcharity.org/#newsletter" target="_blank" rel="noopener">Sign up to our newsletter</a>
+            <a class="footer-donate" href="https://cafdonate.cafonline.org/30442" target="_blank" rel="noopener">❤️ Donate</a>
+        </nav>
     </footer>
     {% block scripts %}{% endblock %}
 </body>
