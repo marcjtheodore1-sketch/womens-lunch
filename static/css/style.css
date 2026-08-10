@@ -725,6 +725,163 @@ p {
     border-bottom: none;
 }
 
+   SUPPORT NEEDS / CARERS NOTICE (public pages)
+   ============================================ */
+
+.support-notice {
+    background: var(--card-bg);
+    border: 2px solid var(--primary);
+    border-left: 5px solid var(--primary-dark);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem 2rem;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow);
+}
+
+.support-notice h2 {
+    color: #276749;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.support-notice p {
+    margin-bottom: 0.85rem;
+}
+
+.support-notice p:last-child {
+    margin-bottom: 0;
+}
+
+.support-notice-footnote {
+    color: var(--text-light);
+    font-size: 0.95rem;
+    font-style: italic;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+}
+
+/* ============================================
+   VOLUNTEER REMINDER (admin area)
+   ============================================ */
+
+.volunteer-reminder {
+    background: #ebf8ff;
+    border: 1.5px solid #bee3f8;
+    border-left: 5px solid #4299e1;
+    border-radius: var(--radius-lg);
+    padding: 1.5rem 1.75rem;
+    margin-bottom: 1.75rem;
+    color: #2a4365;
+}
+
+.volunteer-reminder h3 {
+    color: #2c5282;
+    margin-bottom: 0.85rem;
+    font-size: 1.1rem;
+}
+
+.volunteer-reminder p {
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.volunteer-reminder ul {
+    margin: 0 0 0.85rem;
+    padding-left: 1.35rem;
+}
+
+.volunteer-reminder li {
+    margin-bottom: 0.45rem;
+    font-size: 0.95rem;
+}
+
+.volunteer-reminder-principles {
+    list-style: none;
+    padding-left: 0;
+}
+
+.volunteer-reminder-principles li {
+    position: relative;
+    padding: 0.3rem 0 0.3rem 1.6rem;
+    margin-bottom: 0.2rem;
+}
+
+.volunteer-reminder-principles li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: #2b6cb0;
+    font-weight: 700;
+}
+
+.volunteer-reminder-emergency {
+    background: #fff5f5;
+    border: 1.5px solid #feb2b2;
+    border-left: 4px solid var(--danger-dark);
+    border-radius: var(--radius);
+    padding: 0.9rem 1.1rem;
+    margin: 1rem 0 1.25rem;
+    color: #822727;
+}
+
+.volunteer-reminder-escalate {
+    margin-bottom: 0;
+    padding-top: 0.75rem;
+    border-top: 1px solid #bee3f8;
+}
+
+/* ============================================
+   SAFEGUARDING NOTICE
+   ============================================ */
+
+.safeguarding-notice {
+    background: #fff3cd;
+    border-left: 4px solid var(--warning);
+    padding: 1.25rem 1.5rem;
+    border-radius: var(--radius);
+    margin-bottom: 1.5rem;
+    color: #856404;
+}
+
+.safeguarding-notice p {
+    margin-bottom: 0.5rem;
+}
+
+.safeguarding-notice ul {
+    margin: 0;
+    padding-left: 1.25rem;
+}
+
+.safeguarding-notice li {
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.safeguarding-notice li:last-child {
+    margin-bottom: 0;
+}
+
+/* Admin: carer / support worker flag on a booking */
+.companion-flag {
+    display: block;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: #fff3cd;
+    border-left: 3px solid var(--warning);
+    border-radius: var(--radius-sm);
+    color: #856404;
+    font-size: 0.82rem;
+    line-height: 1.5;
+}
+
+.companion-flag.missing-ack {
+    background: #fed7d7;
+    border-left-color: var(--danger-dark);
+    color: #822727;
+}
+
 /* ============================================
    MY BOOKINGS
    ============================================ */

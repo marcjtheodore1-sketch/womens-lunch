@@ -8,8 +8,11 @@ if path not in sys.path:
 
 # Import and initialise the Flask app. ``create_all`` only adds missing tables,
 # so the existing Women's Lunch data remains untouched.
-from app import app as application, db, init_default_data
+from app import app as application, db, ensure_booking_columns, init_default_data
 
 with application.app_context():
     db.create_all()
+    # Adds only columns that are missing, via ALTER TABLE ADD COLUMN. Existing
+    # rows are preserved, and it logs rather than raises if anything goes wrong.
+    ensure_booking_columns()
     init_default_data()
