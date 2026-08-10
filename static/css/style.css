@@ -35,9 +35,20 @@ html {
     font-size: 16px;
 }
 
+/* Form controls do not inherit the page font by default, so state it once
+   here to keep Inter consistent across the whole site. */
+button,
+input,
+textarea,
+select {
+    font-family: inherit;
+}
+
 body {
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: var(--bg);
+    background-image: linear-gradient(180deg, #f6fffa 0%, #ffffff 45%, #f0fff4 100%);
+    background-attachment: fixed;
     color: var(--text);
     line-height: 1.65;
     min-height: 100vh;
@@ -151,6 +162,21 @@ body {
 .footer a:hover {
     color: var(--primary-dark);
     border-bottom-color: var(--primary-dark);
+}
+
+.footer-links {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.75rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.footer-links a {
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
 }
 
 /* ============================================
@@ -276,13 +302,51 @@ p {
 .landing-header {
     text-align: center;
     margin-bottom: 3rem;
-    padding-bottom: 2rem;
-    border-bottom: 2px solid var(--border);
+    padding: 3.25rem 1.75rem 2.75rem;
+    background: linear-gradient(180deg, #ffffff 0%, var(--primary-light) 100%);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
 }
 
+/* Seamless shimmer: the gradient is a straight 90deg and starts and ends on
+   the same green so it tiles perfectly, and the animation travels exactly one
+   tile width (in em, so it scales with the text). The last frame is therefore
+   identical to the first and the loop never visibly jumps. */
 .landing-header h1 {
-    color: #276749;
-    font-size: 3rem;
+    font-size: 3.4rem;
+    color: #276749; /* fallback if background-clip: text is unsupported */
+    background-image: linear-gradient(
+        90deg,
+        #276749 0%,
+        #3e8138 18%,
+        #4c963c 34%,
+        #75b73b 50%,
+        #4c963c 66%,
+        #3e8138 82%,
+        #276749 100%
+    );
+    background-size: 12em 100%;
+    background-repeat: repeat;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    filter: drop-shadow(0 1px 5px rgba(72, 187, 120, .28));
+    animation: lunch-shimmer 12s linear infinite;
+}
+
+@keyframes lunch-shimmer {
+    from { background-position: 0 50%; }
+    to { background-position: 12em 50%; }
+}
+
+.landing-header .subtitle {
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .landing-header h1 { animation: none; }
 }
 
 .landing-content {
@@ -307,6 +371,12 @@ p {
     margin: 2rem 0;
     border-radius: var(--radius);
     box-shadow: var(--shadow-sm);
+    transition: var(--transition);
+}
+
+.initiative-description:hover {
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
 }
 
 .initiative-description p {
@@ -324,6 +394,12 @@ p {
     padding: 2rem;
     margin-bottom: 2rem;
     box-shadow: var(--shadow);
+    transition: var(--transition);
+}
+
+.lunch-details:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
 }
 
 .lunch-details h2 {
@@ -417,6 +493,11 @@ p {
     border: 2px solid var(--primary);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
+    transition: var(--transition);
+}
+
+.cta-section:hover {
+    box-shadow: 0 12px 28px -6px rgba(72, 187, 120, 0.28);
 }
 
 .cta-hint {
@@ -1120,6 +1201,12 @@ p {
     margin: 0 auto 1.5rem;
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow);
+    transition: var(--transition);
+}
+
+.landing-logo:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-lg);
 }
 
 /* ============================================
