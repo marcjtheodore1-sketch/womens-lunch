@@ -46,6 +46,9 @@ app.config['ACTIVITIES_SMTP_FROM'] = os.environ.get(
     'ACTIVITIES_SMTP_FROM', app.config['ACTIVITIES_SMTP_USER']
 )
 app.config['ADMIN_EMAIL'] = os.environ.get('ADMIN_EMAIL', 'wg.lagc@gmail.com')
+app.config['ACTIVITIES_ADMIN_EMAIL'] = os.environ.get(
+    'ACTIVITIES_ADMIN_EMAIL', 'londonautismgroupcharity@gmail.com'
+)
 app.config['ENABLE_EMAIL'] = os.environ.get('ENABLE_EMAIL', 'false').lower() == 'true'
 
 # Admin password
@@ -1483,7 +1486,7 @@ def film_club_book(session_id):
     <strong>Comfort information:</strong> {escape(booking.comfort_information or 'None provided')}<br>
     <strong>Dietary/allergies:</strong> {escape(booking.dietary_requirements or 'None provided')}</p>"""
     send_rich_email(
-        app.config['ADMIN_EMAIL'],
+        app.config['ACTIVITIES_ADMIN_EMAIL'],
         f'New Film Club booking: {booking.full_name}',
         admin_html,
     )
@@ -1518,7 +1521,7 @@ def film_club_cancel(token):
             booking.cancelled_at = datetime.utcnow()
             db.session.commit()
             send_rich_email(
-                app.config['ADMIN_EMAIL'],
+                app.config['ACTIVITIES_ADMIN_EMAIL'],
                 f'Film Club cancellation: {booking.full_name}',
                 f'<p>{escape(booking.full_name)} has cancelled their place for '
                 f'{booking.session_ref.session_date.strftime("%A %d %B %Y")}.</p>',
@@ -1566,7 +1569,7 @@ def film_club_nominate():
     db.session.add(nomination)
     db.session.commit()
     send_rich_email(
-        app.config['ADMIN_EMAIL'],
+        app.config['ACTIVITIES_ADMIN_EMAIL'],
         f'New Film Club nomination: {film_title}',
         f'<p><strong>{escape(film_title)}</strong> was nominated by '
         f'{escape(name)} ({escape(email)}).</p><p>{escape(why_this_film)}</p>',
@@ -2116,7 +2119,9 @@ def workplace_book(session_id):
     <strong>Dietary/allergies:</strong> {escape(booking.dietary_requirements or 'None provided')}<br>
     <strong>Other information:</strong> {escape(booking.additional_information or 'None provided')}</p>"""
     send_rich_email(
-        app.config['ADMIN_EMAIL'], f'New Workplace Support registration: {booking.full_name}', admin_html
+        app.config['ACTIVITIES_ADMIN_EMAIL'],
+        f'New Workplace Support registration: {booking.full_name}',
+        admin_html,
     )
     return render_template(
         'workplace_confirmation.html', booking=booking,
@@ -2143,7 +2148,7 @@ def workplace_cancel(token):
             booking.cancelled_at = datetime.utcnow()
             db.session.commit()
             send_rich_email(
-                app.config['ADMIN_EMAIL'],
+                app.config['ACTIVITIES_ADMIN_EMAIL'],
                 f'Workplace Support cancellation: {booking.full_name}',
                 f'<p>{escape(booking.full_name)} cancelled their registration for '
                 f'{booking.session_ref.session_date.strftime("%A %d %B %Y")}.</p>',

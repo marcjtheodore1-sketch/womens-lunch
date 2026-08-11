@@ -66,7 +66,8 @@ The app will be available at http://localhost:5002
 - `SECRET_KEY`: a long, random value that keeps sessions secure
 - `ADMIN_PASSWORD`: private admin password
 - `WORKPLACE_ADMIN_PASSWORD`: separate password for Workplace Support administration
-- `ADMIN_EMAIL`: receives booking, cancellation and nomination notices
+- `ADMIN_EMAIL`: legacy/general admin mailbox; kept separate from activity alerts
+- `ACTIVITIES_ADMIN_EMAIL`: receives Film Club booking/nomination/cancellation and AWSS registration/cancellation alerts (`londonautismgroupcharity@gmail.com`)
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`: Women's Lunch mail configuration (`wg.lagc@gmail.com`)
 - `ACTIVITIES_SMTP_HOST`, `ACTIVITIES_SMTP_PORT`, `ACTIVITIES_SMTP_USER`, `ACTIVITIES_SMTP_PASSWORD`, `ACTIVITIES_SMTP_FROM`: Film Club and AWSS mail configuration (`miles.lagc@gmail.com`)
 - `ENABLE_EMAIL`: set to `true` to enable email sending
