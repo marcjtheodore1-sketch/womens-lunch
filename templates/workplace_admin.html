@@ -25,7 +25,38 @@
       <form class="admin-card" method="post" action="{{ url_for('workplace_admin_import_contacts') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><h3>Who can be invited</h3><p>Import past AWSS attendees who may receive future invitations. Enter one email per line, or use <code>Name,email</code>.</p><textarea name="contacts" rows="9" placeholder="Alex Example,alex@example.com&#10;sam@example.com"></textarea><label class="choice consent"><input type="checkbox" name="permission_confirmed" required> I confirm these people may receive AWSS invitations.</label><button class="button secondary small" type="submit">Import contacts</button></form>
       <div class="admin-card highlight-card"><h3>Send for one session</h3><p>Use this only when numbers are low. People already registered for that date are excluded.</p><div class="invitation-session-list">{% for card in session_cards %}{% set item=card.session %}<div class="invitation-session"><div><strong>{{ item.session_date.strftime('%d %b %Y') }}</strong><span>{{ card.places_left }} places left</span></div>{% if item.invitation_run %}<p class="invite-sent">✓ Sent {{ item.invitation_run.sent_at.strftime('%d %b %Y at %H:%M') }}<br><small>{{ item.invitation_run.sent_count }} delivered · {{ item.invitation_run.failed_count }} failed. This session is now locked.</small></p>{% else %}<form method="post" action="{{ url_for('workplace_admin_invite_contacts') }}" onsubmit="return confirm('Send the one-off AWSS invitation for this session? This cannot be sent again.')"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="workplace_session_id" value="{{ item.id }}"><label class="choice consent compact"><input type="checkbox" name="send_confirmed" required> I want to send this one-off invitation now.</label><button class="button primary small" type="submit">Send one-off invitation</button></form>{% endif %}</div>{% endfor %}</div></div>
     </div>
-    <details class="admin-details"><summary><strong>Contact list</strong><span>{{ contacts|length }} contact{% if contacts|length != 1 %}s{% endif %}</span></summary><div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>May invite</th><th>Last invited</th></tr></thead><tbody>{% for contact in contacts %}<tr><td>{{ contact.name or '—' }}</td><td>{{ contact.email }}</td><td>{{ 'Yes' if contact.can_invite else 'No' }}</td><td>{{ contact.last_invited_at.strftime('%d %b %Y') if contact.last_invited_at else 'Never' }}</td></tr>{% else %}<tr><td colspan="4">No contacts stored yet.</td></tr>{% endfor %}</tbody></table></div></details>
+    <section class="admin-card contact-manager" aria-labelledby="awss-contact-list-heading">
+      <div class="contact-manager-heading">
+        <div>
+          <h3 id="awss-contact-list-heading">AWSS contact list</h3>
+          <p><strong>{{ contacts|length }} stored contact{% if contacts|length != 1 %}s{% endif %}.</strong> Edit an address, turn invitations on or off, or remove a contact.</p>
+        </div>
+        <label class="contact-search" for="awss-contact-search"><span>Search contacts</span><input id="awss-contact-search" type="search" placeholder="Type a name or email" autocomplete="off"></label>
+      </div>
+      <p class="contact-result-count" id="awss-contact-result-count" aria-live="polite">Showing {{ contacts|length }} contact{% if contacts|length != 1 %}s{% endif %}</p>
+      <div class="contact-list" id="awss-contact-list">
+        {% for contact in contacts %}
+        <article class="contact-record" data-contact-record data-contact-search="{{ (contact.name or '')|lower }} {{ contact.email|lower }}">
+          <form class="contact-edit-form" method="post" action="{{ url_for('workplace_admin_update_contact', contact_id=contact.id) }}">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <label><span>Name</span><input name="name" value="{{ contact.name or '' }}" maxlength="200" placeholder="Optional"></label>
+            <label class="contact-email-field"><span>Email</span><input name="email" type="email" value="{{ contact.email }}" maxlength="254" required></label>
+            <label class="choice contact-invite-choice"><input name="can_invite" type="checkbox" {% if contact.can_invite %}checked{% endif %}> May receive invitations</label>
+            <div class="contact-meta"><span>Added via</span><strong>{{ contact.source }}</strong></div>
+            <div class="contact-meta"><span>Last invited</span><strong>{{ contact.last_invited_at.strftime('%d %b %Y') if contact.last_invited_at else 'Never' }}</strong></div>
+            <button class="button secondary small" type="submit">Save changes</button>
+          </form>
+          <form class="contact-delete-form" method="post" action="{{ url_for('workplace_admin_delete_contact', contact_id=contact.id) }}" onsubmit="return confirm('Permanently delete {{ contact.email|e }} from the AWSS contact list? This cannot be undone.')">
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+            <button class="button danger small" type="submit">Delete</button>
+          </form>
+        </article>
+        {% else %}
+        <div class="empty-state">No AWSS contacts are stored yet.</div>
+        {% endfor %}
+      </div>
+      <div class="empty-state contact-no-results" id="awss-contact-no-results" hidden>No contacts match that search.</div>
+    </section>
   </section>
 
   <section class="admin-panel" data-panel="emails" hidden><div class="panel-heading"><div><h2>Registration confirmation emails</h2><p>Edit the default message for future registrations and add instructions for a specific date.</p></div></div><form class="admin-card email-settings-card" method="post" action="{{ url_for('workplace_admin_email_settings') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><h3>Default confirmation</h3><label>Email subject<input name="confirmation_subject" maxlength="240" value="{{ confirmation_subject }}" required></label><small>You may use <code>{date}</code>.</small><label>Opening message<textarea name="confirmation_message" rows="5" required>{{ confirmation_message }}</textarea></label><button class="button primary small" type="submit">Save default email</button></form><div class="session-email-grid">{% for card in session_cards %}{% set item=card.session %}<form class="admin-card" method="post" action="{{ url_for('workplace_admin_session_email_message', session_id=item.id) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><h3>{{ item.session_date.strftime('%d %b %Y') }}</h3><p>Add information for this session only. Leave blank to remove it.</p><textarea name="confirmation_note" rows="5" placeholder="No extra message for this session">{{ item.confirmation_note or '' }}</textarea><button class="button secondary small" type="submit">Save session note</button></form>{% endfor %}</div></section>
@@ -37,4 +68,34 @@
   </section>
 </section>
 {% endblock %}
-{% block scripts %}<script>const buttons=[...document.querySelectorAll('[data-tab]')],panels=[...document.querySelectorAll('[data-panel]')];function showAdminTab(name){buttons.forEach(b=>b.classList.toggle('active',b.dataset.tab===name));panels.forEach(p=>p.hidden=p.dataset.panel!==name);history.replaceState(null,'',`?tab=${name}`)}buttons.forEach(button=>button.addEventListener('click',()=>showAdminTab(button.dataset.tab)));showAdminTab(new URLSearchParams(location.search).get('tab')||'sessions');</script>{% endblock %}
+{% block scripts %}
+<script>
+const buttons = [...document.querySelectorAll('[data-tab]')];
+const panels = [...document.querySelectorAll('[data-panel]')];
+function showAdminTab(name) {
+  buttons.forEach(button => button.classList.toggle('active', button.dataset.tab === name));
+  panels.forEach(panel => panel.hidden = panel.dataset.panel !== name);
+  history.replaceState(null, '', `?tab=${name}`);
+}
+buttons.forEach(button => button.addEventListener('click', () => showAdminTab(button.dataset.tab)));
+showAdminTab(new URLSearchParams(location.search).get('tab') || 'sessions');
+
+const contactSearch = document.getElementById('awss-contact-search');
+const contactRecords = [...document.querySelectorAll('[data-contact-record]')];
+const contactResultCount = document.getElementById('awss-contact-result-count');
+const contactNoResults = document.getElementById('awss-contact-no-results');
+if (contactSearch) {
+  contactSearch.addEventListener('input', () => {
+    const query = contactSearch.value.trim().toLowerCase();
+    let visible = 0;
+    contactRecords.forEach(record => {
+      const matches = !query || record.dataset.contactSearch.includes(query);
+      record.hidden = !matches;
+      if (matches) visible += 1;
+    });
+    contactResultCount.textContent = `Showing ${visible} contact${visible === 1 ? '' : 's'}`;
+    contactNoResults.hidden = visible !== 0;
+  });
+}
+</script>
+{% endblock %}

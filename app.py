@@ -2307,6 +2307,47 @@ def workplace_admin_import_contacts():
     return redirect(url_for('workplace_admin', tab='contacts'))
 
 
+@app.route('/admin/workplace-support/contact/<int:contact_id>', methods=['POST'])
+@workplace_admin_required
+def workplace_admin_update_contact(contact_id):
+    require_csrf()
+    contact = WorkplaceContact.query.get_or_404(contact_id)
+    email = valid_email(request.form.get('email'))
+    if not email:
+        flash('Enter a valid email address for this AWSS contact.', 'error')
+        return redirect(url_for('workplace_admin', tab='contacts'))
+
+    duplicate = WorkplaceContact.query.filter(
+        WorkplaceContact.email == email,
+        WorkplaceContact.id != contact.id,
+    ).first()
+    if duplicate:
+        flash(
+            f'{email} is already in the AWSS contact list. Delete the incorrect duplicate instead.',
+            'error',
+        )
+        return redirect(url_for('workplace_admin', tab='contacts'))
+
+    contact.name = clean_text(request.form.get('name'), 200) or None
+    contact.email = email
+    contact.can_invite = request.form.get('can_invite') == 'on'
+    db.session.commit()
+    flash(f'AWSS contact {email} updated.', 'success')
+    return redirect(url_for('workplace_admin', tab='contacts'))
+
+
+@app.route('/admin/workplace-support/contact/<int:contact_id>/delete', methods=['POST'])
+@workplace_admin_required
+def workplace_admin_delete_contact(contact_id):
+    require_csrf()
+    contact = WorkplaceContact.query.get_or_404(contact_id)
+    email = contact.email
+    db.session.delete(contact)
+    db.session.commit()
+    flash(f'AWSS contact {email} deleted.', 'success')
+    return redirect(url_for('workplace_admin', tab='contacts'))
+
+
 @app.route('/admin/workplace-support/invite', methods=['POST'])
 @workplace_admin_required
 def workplace_admin_invite_contacts():
