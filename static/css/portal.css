@@ -809,7 +809,7 @@ th { background: #f1f5f9; font-size: .73rem; text-transform: uppercase; letter-s
 .choice.consent.compact { padding: .55rem; font-size: .82rem; }
 .invite-sent { margin: .6rem 0 0; padding: .65rem; color: #17634d; background: #e4f7ee; border-radius: 7px; font-weight: 700; }
 .invite-sent small { font-weight: 500; }
-.contact-manager { margin-top: 1.25rem; border: 2px solid #d98b99; }
+.contact-manager { margin: 0 0 1.25rem; border: 2px solid #d98b99; }
 .contact-manager-heading { display: flex; align-items: end; justify-content: space-between; gap: 1rem; }
 .contact-manager-heading h3 { margin: 0; font-size: 1.3rem; }
 .contact-manager-heading p { margin: .3rem 0 0; color: var(--muted); }
