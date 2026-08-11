@@ -62,9 +62,40 @@
 
     <section class="admin-panel" data-panel="contacts" hidden>
         <div class="panel-heading"><div><h2>Optional low-number invitations</h2><p>Nothing is sent automatically. If a particular session has low numbers, an administrator can manually send one invitation to permitted past attendees. Once sent for that session, it cannot be sent again.</p></div></div>
+        <section class="admin-card contact-manager" aria-labelledby="film-contact-list-heading">
+          <div class="contact-manager-heading">
+            <div>
+              <h3 id="film-contact-list-heading">Film Club contact list</h3>
+              <p><strong>{{ contacts|length }} stored contact{% if contacts|length != 1 %}s{% endif %}.</strong> Edit an address, turn future invitations on or off, or remove a contact. Nothing is emailed from this list unless an administrator explicitly uses the send control below.</p>
+            </div>
+            <label class="contact-search" for="film-contact-search"><span>Search contacts</span><input id="film-contact-search" type="search" placeholder="Type a name or email" autocomplete="off"></label>
+          </div>
+          <p class="contact-result-count" id="film-contact-result-count" aria-live="polite">Showing {{ contacts|length }} contact{% if contacts|length != 1 %}s{% endif %}</p>
+          <div class="contact-list" id="film-contact-list">
+            {% for contact in contacts %}
+            <article class="contact-record" data-film-contact-record data-contact-search="{{ (contact.name or '')|lower }} {{ contact.email|lower }}">
+              <form class="contact-edit-form" method="post" action="{{ url_for('film_admin_update_contact', contact_id=contact.id) }}">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <label><span>Name</span><input name="name" value="{{ contact.name or '' }}" maxlength="200" placeholder="Optional"></label>
+                <label class="contact-email-field"><span>Email</span><input name="email" type="email" value="{{ contact.email }}" maxlength="254" required></label>
+                <label class="choice contact-invite-choice"><input name="can_invite" type="checkbox" {% if contact.can_invite %}checked{% endif %}> May receive invitations</label>
+                <div class="contact-meta"><span>Added via</span><strong>{{ contact.source }}</strong></div>
+                <div class="contact-meta"><span>Last invited</span><strong>{{ contact.last_invited_at.strftime('%d %b %Y') if contact.last_invited_at else 'Never' }}</strong></div>
+                <button class="button secondary small" type="submit">Save changes</button>
+              </form>
+              <form class="contact-delete-form" method="post" action="{{ url_for('film_admin_delete_contact', contact_id=contact.id) }}" onsubmit="return confirm('Permanently delete {{ contact.email|e }} from the Film Club contact list? This cannot be undone.')">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+                <button class="button danger small" type="submit">Delete</button>
+              </form>
+            </article>
+            {% else %}
+            <div class="empty-state">No Film Club contacts are stored yet.</div>
+            {% endfor %}
+          </div>
+          <div class="empty-state contact-no-results" id="film-contact-no-results" hidden>No contacts match that search.</div>
+        </section>
         <div class="two-column-admin"><form class="admin-card" method="post" action="{{ url_for('film_admin_import_contacts') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><h3>Who can be invited</h3><p>Import past Film Club attendees who have agreed to receive future invitations. Enter one email per line, or use <code>Name,email</code>.</p><textarea name="contacts" rows="9" placeholder="Alex Example,alex@example.com&#10;sam@example.com"></textarea><label class="choice consent"><input type="checkbox" name="permission_confirmed" required> I confirm these people may receive Film Club invitations.</label><button class="button secondary small" type="submit">Import contacts</button></form>
           <div class="admin-card highlight-card"><h3>Send for one session</h3><p>Choose only when numbers are low. People already booked for that date are excluded.</p><div class="invitation-session-list">{% for card in session_cards %}{% set item = card.session %}<div class="invitation-session"><div><strong>{{ item.session_date.strftime('%d %b %Y') }}</strong><span>{{ card.places_left }} places left</span></div>{% if item.invitation_run %}<p class="invite-sent">✓ Sent {{ item.invitation_run.sent_at.strftime('%d %b %Y at %H:%M') }}<br><small>{{ item.invitation_run.sent_count }} delivered · {{ item.invitation_run.failed_count }} failed. This session is now locked.</small></p>{% else %}<form method="post" action="{{ url_for('film_admin_invite_contacts') }}" onsubmit="return confirm('Send the one-off invitation for this session? This cannot be sent again.')"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><input type="hidden" name="film_session_id" value="{{ item.id }}"><label class="choice consent compact"><input type="checkbox" name="send_confirmed" required> I want to send this one-off invitation now.</label><button class="button primary small" type="submit">Send one-off invitation</button></form>{% endif %}</div>{% endfor %}</div></div></div>
-        <details class="admin-details"><summary><strong>Contact list</strong><span>{{ contacts|length }} contact{% if contacts|length != 1 %}s{% endif %}</span></summary><div class="table-wrap"><table><thead><tr><th>Name</th><th>Email</th><th>May invite</th><th>Last invited</th></tr></thead><tbody>{% for contact in contacts %}<tr><td>{{ contact.name or '—' }}</td><td>{{ contact.email }}</td><td>{{ 'Yes' if contact.can_invite else 'No' }}</td><td>{{ contact.last_invited_at.strftime('%d %b %Y') if contact.last_invited_at else 'Never' }}</td></tr>{% else %}<tr><td colspan="4">No contacts stored yet.</td></tr>{% endfor %}</tbody></table></div></details>
     </section>
 
     <section class="admin-panel" data-panel="emails" hidden>
@@ -85,4 +116,9 @@ const buttons=[...document.querySelectorAll('[data-tab]')],panels=[...document.q
 function showAdminTab(name){buttons.forEach(b=>b.classList.toggle('active',b.dataset.tab===name));panels.forEach(p=>p.hidden=p.dataset.panel!==name);history.replaceState(null,'',`?tab=${name}`)}
 buttons.forEach(button=>button.addEventListener('click',()=>showAdminTab(button.dataset.tab)));
 showAdminTab(new URLSearchParams(location.search).get('tab')||'sessions');
+const filmContactSearch=document.getElementById('film-contact-search');
+const filmContactRecords=[...document.querySelectorAll('[data-film-contact-record]')];
+const filmContactResultCount=document.getElementById('film-contact-result-count');
+const filmContactNoResults=document.getElementById('film-contact-no-results');
+if(filmContactSearch){filmContactSearch.addEventListener('input',()=>{const query=filmContactSearch.value.trim().toLowerCase();let visible=0;filmContactRecords.forEach(record=>{const matches=!query||record.dataset.contactSearch.includes(query);record.hidden=!matches;if(matches)visible+=1;});filmContactResultCount.textContent=`Showing ${visible} contact${visible===1?'':'s'}`;filmContactNoResults.hidden=visible!==0;});}
 </script>{% endblock %}

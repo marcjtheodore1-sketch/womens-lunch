@@ -1757,6 +1757,49 @@ def film_admin_import_contacts():
     return redirect(url_for('film_club_admin', tab='contacts'))
 
 
+@app.route('/admin/film-club/contact/<int:contact_id>', methods=['POST'])
+@admin_required
+def film_admin_update_contact(contact_id):
+    """Update one retained Film Club contact without sending any email."""
+    require_csrf()
+    contact = FilmContact.query.get_or_404(contact_id)
+    email = valid_email(request.form.get('email'))
+    if not email:
+        flash('Enter a valid email address for this Film Club contact.', 'error')
+        return redirect(url_for('film_club_admin', tab='contacts'))
+
+    duplicate = FilmContact.query.filter(
+        FilmContact.email == email,
+        FilmContact.id != contact.id,
+    ).first()
+    if duplicate:
+        flash(
+            f'{email} is already in the Film Club contact list. Delete the incorrect duplicate instead.',
+            'error',
+        )
+        return redirect(url_for('film_club_admin', tab='contacts'))
+
+    contact.name = clean_text(request.form.get('name'), 200) or None
+    contact.email = email
+    contact.can_invite = request.form.get('can_invite') == 'on'
+    db.session.commit()
+    flash(f'Film Club contact {email} updated.', 'success')
+    return redirect(url_for('film_club_admin', tab='contacts'))
+
+
+@app.route('/admin/film-club/contact/<int:contact_id>/delete', methods=['POST'])
+@admin_required
+def film_admin_delete_contact(contact_id):
+    """Permanently remove one Film Club contact without sending any email."""
+    require_csrf()
+    contact = FilmContact.query.get_or_404(contact_id)
+    email = contact.email
+    db.session.delete(contact)
+    db.session.commit()
+    flash(f'Film Club contact {email} deleted.', 'success')
+    return redirect(url_for('film_club_admin', tab='contacts'))
+
+
 @app.route('/admin/film-club/invite', methods=['POST'])
 @admin_required
 def film_admin_invite_contacts():
