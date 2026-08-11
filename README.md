@@ -25,7 +25,7 @@ It also hosts the charity's monthly Autistic Workplace Support Sessions.
 - **Flexible Attendance**: Register for one-to-one mentoring, the confidential Speaking Circle or both
 - **Workplace Support Planning**: Goals, access needs and companion/carer information in a dedicated admin area
 - **Workplace Support Emails**: Confirmation, selected-time calendar invitation, cancellation and editable session notes
-- **Workplace Support Invitations**: Manual, one-use-per-session invitations for low-number dates
+- **Workplace Support Invitations**: Every registration is retained in the AWSS contact list; admins can send a manual, one-use-per-session invitation for low-number dates
 - **Workplace Support News**: Optional admin-managed homepage news ticker
 
 ## Setup

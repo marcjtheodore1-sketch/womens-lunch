@@ -2091,6 +2091,9 @@ def workplace_book(session_id):
         cancel_token=secrets.token_urlsafe(32),
     )
     db.session.add(booking)
+    upsert_workplace_contact(
+        full_name, email, True, 'AWSS registration'
+    )
     db.session.commit()
 
     cancel_url = url_for('workplace_cancel', token=booking.cancel_token, _external=True)
