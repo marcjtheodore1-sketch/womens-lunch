@@ -818,6 +818,7 @@ th { background: #f1f5f9; font-size: .73rem; text-transform: uppercase; letter-s
 .contact-result-count { margin: 1rem 0 .55rem; color: #98233b; font-weight: 800; }
 .contact-list { max-height: 720px; padding-right: .25rem; display: grid; gap: .65rem; overflow-y: auto; }
 .contact-record { padding: .75rem; display: flex; align-items: end; gap: .55rem; background: #fffafb; border: 1px solid #e7bec5; border-radius: 9px; }
+.contact-record[hidden] { display: none; }
 .contact-edit-form { min-width: 0; flex: 1; display: grid; grid-template-columns: minmax(130px, .8fr) minmax(220px, 1.4fr) auto minmax(105px, .65fr) minmax(90px, .55fr) auto; align-items: end; gap: .55rem; }
 .contact-edit-form label:not(.choice) { margin: 0; }
 .contact-invite-choice { min-height: 44px; margin: 0; padding: .55rem .65rem; white-space: nowrap; }
