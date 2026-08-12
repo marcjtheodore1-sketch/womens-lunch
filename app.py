@@ -9,6 +9,7 @@ from flask import (
     flash, Response, abort
 )
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timedelta, time, timezone
 from functools import wraps
 from email.message import EmailMessage
@@ -494,6 +495,11 @@ def add_security_headers(response):
 def clean_text(value, max_length=None):
     cleaned = (value or '').strip()
     return cleaned[:max_length] if max_length else cleaned
+
+
+def film_titles_match(first, second):
+    """Compare film titles without treating capitalisation or spacing as a change."""
+    return clean_text(first, 240).casefold() == clean_text(second, 240).casefold()
 
 
 def valid_email(value):
@@ -1031,13 +1037,27 @@ def notify_bookers_of_film_title(film_session):
     if not bookings:
         return 0, 0, True
 
-    sent = failed = 0
+    # A person may have more than one booking record. Announcements are per
+    # email address, so deduplicate before sending and compare addresses in a
+    # normalised form. This also keeps retries idempotent.
+    bookings_by_email = {}
     for booking in bookings:
-        if FilmTitleRecipient.query.filter_by(
-            film_session_id=film_session.id,
-            film_title=title,
-            recipient_email=booking.email,
-        ).first():
+        email = valid_email(booking.email)
+        if email and email not in bookings_by_email:
+            bookings_by_email[email] = booking
+
+    existing_recipients = {
+        email for email in (
+            valid_email(row.recipient_email)
+            for row in FilmTitleRecipient.query.filter_by(
+                film_session_id=film_session.id, film_title=title
+            ).all()
+        ) if email
+    }
+
+    sent = failed = 0
+    for email, booking in bookings_by_email.items():
+        if email in existing_recipients:
             continue
         html = f"""<p>Hello {escape(booking.full_name)},</p>
         <p>The film for your Autistic Film Club session on
@@ -1047,30 +1067,44 @@ def notify_bookers_of_film_title(film_session):
         {FILM_VENUE_NAME}, {FILM_VENUE_ADDRESS}.</p>
         <p>Warm wishes,<br><strong>LAGC Autistic Film Club team</strong></p>"""
         if send_rich_email(
-            booking.email, f'Film announced for your Film Club session: {title}', html
+            email, f'Film announced for your Film Club session: {title}', html
         ):
             sent += 1
             db.session.add(FilmTitleRecipient(
                 film_session_id=film_session.id,
                 film_title=title,
-                recipient_email=booking.email,
+                recipient_email=email,
             ))
+            existing_recipients.add(email)
         else:
             failed += 1
     if sent:
-        notification = FilmTitleNotification.query.filter_by(
-            film_session_id=film_session.id, film_title=title
-        ).first()
-        if not notification:
-            notification = FilmTitleNotification(
+        try:
+            # Keep the autoflush-triggering queries inside the recovery block;
+            # this is exactly where a simultaneous repeat used to raise.
+            notification = FilmTitleNotification.query.filter_by(
                 film_session_id=film_session.id, film_title=title
+            ).first()
+            if not notification:
+                notification = FilmTitleNotification(
+                    film_session_id=film_session.id, film_title=title
+                )
+                db.session.add(notification)
+            db.session.flush()
+            notification.recipient_count = FilmTitleRecipient.query.filter_by(
+                film_session_id=film_session.id, film_title=title
+            ).count()
+            db.session.commit()
+        except IntegrityError:
+            # A repeated/double submission can race another worker after the
+            # emails have been sent. The unique constraint is doing its job;
+            # recover cleanly instead of returning a 500 to the administrator.
+            db.session.rollback()
+            app.logger.warning(
+                'A duplicate Film Club title notification was safely ignored '
+                'for session %s and title %r.', film_session.id, title
             )
-            db.session.add(notification)
-        db.session.flush()
-        notification.recipient_count = FilmTitleRecipient.query.filter_by(
-            film_session_id=film_session.id, film_title=title
-        ).count()
-        db.session.commit()
+            return 0, failed, True
     return sent, failed, False
 
 def ensure_booking_columns():
@@ -1655,17 +1689,18 @@ def film_admin_update_session(session_id):
         film_session.max_attendees = 15
     film_session.is_bookable = request.form.get('is_bookable') == 'on'
     db.session.commit()
-    if film_session.film_title:
+    title_changed = not film_titles_match(previous_title, film_session.film_title)
+    if film_session.film_title and title_changed:
         sent, failed, skipped = notify_bookers_of_film_title(film_session)
         if sent or failed:
             flash(
                 f'Session updated. Film announcement emails: {sent} sent, {failed} failed.',
                 'success' if not failed else 'error',
             )
-        elif previous_title == film_session.film_title:
-            flash('Session updated. Everyone already received this film announcement.', 'success')
         else:
             flash('Session updated. There were no existing bookers to notify.', 'success')
+    elif film_session.film_title:
+        flash('Session updated. The film title was unchanged, so no announcement email was sent.', 'success')
     else:
         flash('Session updated.', 'success')
     return redirect(url_for('film_club_admin', tab='sessions'))
@@ -1679,21 +1714,42 @@ def film_admin_update_nomination(nomination_id):
     status = request.form.get('status', 'new')
     if status not in {'new', 'considering', 'selected', 'screened', 'declined'}:
         abort(400)
-    nomination.status = status
     selected_id = request.form.get('selected_session_id', type=int)
-    nomination.selected_session_id = selected_id if selected_id else None
     selected_session = None
-    previous_title = None
-    if status == 'selected' and selected_id:
+    title_changed = False
+    if status == 'selected':
+        if not selected_id:
+            flash('Choose a screening date before marking a nomination as selected.', 'error')
+            return redirect(url_for('film_club_admin', tab='nominations'))
         selected_session = FilmSession.query.get_or_404(selected_id)
-        previous_title = selected_session.film_title
+        if (
+            selected_session.film_title
+            and not film_titles_match(selected_session.film_title, nomination.film_title)
+        ):
+            flash(
+                f'{selected_session.session_date.strftime("%d %b %Y")} already has '
+                f'“{selected_session.film_title}” published. Change or clear that session title '
+                'first, or choose another date; nothing was overwritten.',
+                'error',
+            )
+            return redirect(url_for('film_club_admin', tab='nominations'))
+        title_changed = not selected_session.film_title
         selected_session.film_title = nomination.film_title
+
+    nomination.status = status
+    nomination.selected_session_id = selected_id if selected_id else None
     db.session.commit()
-    if selected_session:
+    if selected_session and title_changed:
         sent, failed, skipped = notify_bookers_of_film_title(selected_session)
         flash(
             f'Nomination updated. Film announcement emails: {sent} sent, {failed} failed.',
             'success' if not failed else 'error',
+        )
+    elif selected_session:
+        flash(
+            'Nomination updated and linked to the existing published film title. '
+            'No duplicate announcement email was sent.',
+            'success',
         )
     else:
         flash('Nomination updated.', 'success')
