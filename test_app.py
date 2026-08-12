@@ -146,7 +146,92 @@ class FilmNominationAdminTests(unittest.TestCase):
                 1,
             )
 
+    def test_every_film_booking_creates_contact_with_consent_status(self):
+        with app_module.app.app_context():
+            opted_in = app_module.FilmBooking(
+                film_session_id=self.add_session_and_nomination()[0],
+                full_name='Consenting attendee',
+                email='Consent@Example.org',
+                is_adult=True,
+                future_updates_opt_in=True,
+                cancel_token='contact-token-one',
+            )
+            opted_out = app_module.FilmBooking(
+                film_session_id=opted_in.film_session_id,
+                full_name='Private attendee',
+                email='private@example.org',
+                is_adult=True,
+                future_updates_opt_in=False,
+                cancel_token='contact-token-two',
+            )
+            app_module.db.session.add_all([opted_in, opted_out])
+            app_module.db.session.flush()
+
+            app_module.record_film_booking_contact(opted_in)
+            app_module.record_film_booking_contact(opted_out)
+            app_module.db.session.commit()
+
+            contacts = {
+                item.email: item for item in app_module.FilmContact.query.all()
+            }
+            self.assertEqual(len(contacts), 2)
+            self.assertTrue(contacts['consent@example.org'].can_invite)
+            self.assertFalse(contacts['private@example.org'].can_invite)
+
+    def test_sync_backfills_all_contacts_without_duplicates(self):
+        with app_module.app.app_context():
+            session_id, _ = self.add_session_and_nomination()
+            app_module.db.session.add_all([
+                app_module.FilmBooking(
+                    film_session_id=session_id,
+                    full_name='Earlier attendee',
+                    email='earlier@example.org',
+                    is_adult=True,
+                    future_updates_opt_in=True,
+                    cancel_token='backfill-token-one',
+                ),
+                app_module.FilmBooking(
+                    film_session_id=session_id,
+                    full_name='Repeat attendee',
+                    email='EARLIER@example.org',
+                    is_adult=True,
+                    future_updates_opt_in=True,
+                    cancel_token='backfill-token-two',
+                ),
+                app_module.FilmBooking(
+                    film_session_id=session_id,
+                    full_name='Did not consent',
+                    email='no-consent@example.org',
+                    is_adult=True,
+                    future_updates_opt_in=False,
+                    cancel_token='backfill-token-three',
+                ),
+            ])
+            app_module.db.session.commit()
+
+            app_module.sync_film_booking_contacts()
+            app_module.db.session.commit()
+            app_module.sync_film_booking_contacts()
+            app_module.db.session.commit()
+
+            contacts = {
+                item.email: item for item in app_module.FilmContact.query.all()
+            }
+            self.assertEqual(len(contacts), 2)
+            self.assertTrue(contacts['earlier@example.org'].can_invite)
+            self.assertFalse(contacts['no-consent@example.org'].can_invite)
+
+            # A later administrator decision must survive future app starts.
+            contacts['earlier@example.org'].can_invite = False
+            app_module.db.session.commit()
+            app_module.sync_film_booking_contacts()
+            app_module.db.session.commit()
+            self.assertFalse(
+                app_module.FilmContact.query.filter_by(
+                    email='earlier@example.org'
+                ).one().can_invite
+            )
+
 
 if __name__ == '__main__':
     unittest.main()
-

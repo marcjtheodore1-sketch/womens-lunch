@@ -820,7 +820,12 @@ def workplace_confirmation_email(booking, cancel_url, calendar_url):
 
 
 def upsert_film_contact(name, email, can_invite, source='Film Club booking'):
-    contact = FilmContact.query.filter_by(email=email).first()
+    email = valid_email(email)
+    if not email:
+        return None
+    contact = FilmContact.query.filter(
+        db.func.lower(FilmContact.email) == email
+    ).first()
     if contact:
         if name and not contact.name:
             contact.name = name
@@ -829,6 +834,54 @@ def upsert_film_contact(name, email, can_invite, source='Film Club booking'):
         contact = FilmContact(name=name, email=email, can_invite=can_invite, source=source)
         db.session.add(contact)
     return contact
+
+
+def record_film_booking_contact(booking):
+    """Store every booker and record whether they permitted invitations."""
+    return upsert_film_contact(
+        booking.full_name,
+        booking.email,
+        booking.future_updates_opt_in,
+        'Film Club booking',
+    )
+
+
+def sync_film_booking_contacts():
+    """Backfill any Film Club bookings missed before contact sync existed.
+
+    This is safe to run at every application start. It adds only missing
+    contacts, so it never overwrites an administrator's later checkbox choice.
+    Where one person has several historic bookings, any explicit opt-in is
+    reflected when their missing contact is first created.
+    """
+    synced = 0
+    bookings_by_email = {}
+    for booking in FilmBooking.query.order_by(FilmBooking.created_at).all():
+        email = valid_email(booking.email)
+        if not email:
+            continue
+        details = bookings_by_email.setdefault(email, {
+            'name': booking.full_name,
+            'can_invite': False,
+        })
+        details['can_invite'] = (
+            details['can_invite'] or booking.future_updates_opt_in
+        )
+
+    for email, details in bookings_by_email.items():
+        exists = FilmContact.query.filter(
+            db.func.lower(FilmContact.email) == email
+        ).first()
+        if exists:
+            continue
+        db.session.add(FilmContact(
+            name=details['name'],
+            email=email,
+            can_invite=details['can_invite'],
+            source='Film Club booking backfill',
+        ))
+        synced += 1
+    return synced
 
 def generate_confirmation_message(name, first_name, date_display, main_course, drink, dietary_requirements, cancel_url):
     """Generate a nice HTML confirmation message"""
@@ -1200,6 +1253,10 @@ def init_default_data():
                 is_bookable=True,
             ))
     
+    # Reconcile contacts from earlier Film Club bookings. This also covers
+    # bookings made before the contact-management screen was introduced.
+    sync_film_booking_contacts()
+
     db.session.commit()
 
 def get_next_bookable_date():
@@ -1497,7 +1554,7 @@ def film_club_book(session_id):
         responsibility_details=responsibility_details or None,
         support_boundary_acknowledged=True,
     ))
-    upsert_film_contact(full_name, email, booking.future_updates_opt_in)
+    record_film_booking_contact(booking)
     db.session.commit()
 
     cancel_url = url_for('film_club_cancel', token=booking.cancel_token, _external=True)
