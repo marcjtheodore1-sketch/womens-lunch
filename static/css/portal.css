@@ -918,21 +918,28 @@ th { background: #f1f5f9; font-size: .73rem; text-transform: uppercase; letter-s
 
 @media (max-width: 720px) {
   .site-header {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 0;
-    padding-block: .4rem;
-  }
-  .site-identity { align-self: flex-start; padding-block: .15rem; }
-  .site-identity img { width: 42px; height: 42px; }
-  /* Tuned so the full set of activity links settles into two tidy rows
-     rather than three, while keeping the tap targets comfortably large. */
-  .site-header nav {
-    width: 100%;
-    margin-top: .45rem;
-    padding-top: .5rem;
-    gap: .1rem .85rem;
+    align-items: flex-start;
+    flex-direction: row;
+    gap: .7rem;
+    padding-block: .65rem .4rem;
     border-top: 1px solid rgba(255, 255, 255, .28);
+  }
+  .site-identity {
+    align-self: flex-start;
+    flex: 0 0 auto;
+    padding-top: .25rem;
+  }
+  .site-identity img { width: 42px; height: 42px; }
+  /* Keep the logo beside the links on phones so it does not consume a
+     separate row above the navigation. */
+  .site-header nav {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+    margin-top: 0;
+    padding-top: 0;
+    gap: .1rem .85rem;
+    border-top: 0;
   }
   .site-header nav a {
     font-size: .85rem;
