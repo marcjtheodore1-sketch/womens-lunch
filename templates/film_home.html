@@ -26,11 +26,35 @@
     </div>
 </section>
 
-<section class="quick-facts" aria-label="Film Club key information">
-    <div><span class="fact-icon" aria-hidden="true">📅</span><p><strong>Third Wednesday</strong><br>of every month</p></div>
-    <div><span class="fact-icon" aria-hidden="true">🕐</span><p><strong>5pm–8pm</strong><br>film from 5:30–5:45pm</p></div>
-    <div><span class="fact-icon" aria-hidden="true">📍</span><p><strong>{{ venue_name }}</strong><br>{{ venue_address }}</p></div>
-    <div><span class="fact-icon" aria-hidden="true">🎫</span><p><strong>15 free places</strong><br>adults aged 18+</p></div>
+<section class="quick-facts page-shell" aria-label="Film Club key information">
+    <div><span class="fact-icon" aria-hidden="true">📅</span><p><strong>Third Wednesday</strong><span>of every month</span></p></div>
+    <div><span class="fact-icon" aria-hidden="true">🕐</span><p><strong>5pm–8pm</strong><span>film from 5:30–5:45pm</span></p></div>
+    <a href="#plan-your-visit"><span class="fact-icon" aria-hidden="true">📍</span><p><strong>{{ venue_name }}</strong><span>Address, access and map ↓</span></p></a>
+    <div><span class="fact-icon" aria-hidden="true">🎫</span><p><strong>15 free places</strong><span>adults aged 18+</span></p></div>
+</section>
+
+<section id="screenings" class="screenings-section">
+    <div class="page-shell">
+        <div class="section-heading"><div><p class="section-kicker">Choose a screening</p><h2>Upcoming dates and films</h2></div><p>Each session has 15 places. Announced films are highlighted; other titles will appear once selected.</p></div>
+        <div class="screening-grid">
+        {% for card in session_cards %}
+            {% set item = card.session %}
+            <article class="screening-card{% if item.film_title %} film-announced{% else %} film-pending{% endif %}{% if card.is_full or not item.is_bookable %} unavailable{% endif %}">
+                <div class="date-ticket"><strong>{{ item.session_date.strftime('%d') }}</strong><span>{{ item.session_date.strftime('%b')|upper }}<br>{{ item.session_date.strftime('%Y') }}</span></div>
+                <div class="screening-info">
+                    <p>{{ item.session_date.strftime('%A') }} · 5pm–8pm</p>
+                    {% if item.film_title %}<span class="film-announced-label">Film announced</span><h3 class="announced-film-title">{{ item.film_title }}</h3>
+                    {% else %}<h3 class="pending-film-title">Film to be announced</h3>{% endif %}
+                    {% if item.film_details %}<p class="film-details">{{ item.film_details }}</p>{% endif %}
+                    {% if card.is_full %}<span class="availability full">Fully booked</span>
+                    {% elif not item.is_bookable %}<span class="availability closed">Bookings closed</span>
+                    {% else %}<span class="availability">{{ card.places_left }} place{% if card.places_left != 1 %}s{% endif %} remaining</span>{% endif %}
+                </div>
+                {% if item.is_bookable and not card.is_full %}<a class="button primary small" href="{{ url_for('film_club_book', session_id=item.id) }}">Book this session</a>{% endif %}
+            </article>
+        {% else %}<p>No screenings are currently scheduled. Please check back soon.</p>{% endfor %}
+        </div>
+    </div>
 </section>
 
 <section class="story-section page-shell">
@@ -50,35 +74,12 @@
 
 <div class="page-shell public-guidelines-wrap">{% include '_community_guidelines.html' %}</div>
 
-<section id="screenings" class="screenings-section">
-    <div class="page-shell">
-        <div class="section-heading"><div><h2>Upcoming dates</h2></div><p>Each session has 15 places. Film titles will appear here once they are selected.</p></div>
-        <div class="screening-grid">
-        {% for card in session_cards %}
-            {% set item = card.session %}
-            <article class="screening-card{% if card.is_full or not item.is_bookable %} unavailable{% endif %}">
-                <div class="date-ticket"><strong>{{ item.session_date.strftime('%d') }}</strong><span>{{ item.session_date.strftime('%b')|upper }}<br>{{ item.session_date.strftime('%Y') }}</span></div>
-                <div class="screening-info">
-                    <p>{{ item.session_date.strftime('%A') }} · 5pm–8pm</p>
-                    <h3>{{ item.film_title or 'Film to be announced' }}</h3>
-                    {% if item.film_details %}<p class="film-details">{{ item.film_details }}</p>{% endif %}
-                    {% if card.is_full %}<span class="availability full">Fully booked</span>
-                    {% elif not item.is_bookable %}<span class="availability closed">Bookings closed</span>
-                    {% else %}<span class="availability">{{ card.places_left }} place{% if card.places_left != 1 %}s{% endif %} remaining</span>{% endif %}
-                </div>
-                {% if item.is_bookable and not card.is_full %}<a class="button primary small" href="{{ url_for('film_club_book', session_id=item.id) }}">Book this session</a>{% endif %}
-            </article>
-        {% else %}<p>No screenings are currently scheduled. Please check back soon.</p>{% endfor %}
-        </div>
-    </div>
-</section>
-
 <section class="nomination-banner page-shell">
     <div><h2>Nominate a film</h2><p>Suggest a film and tell us why you chose it. If it is selected, you can introduce it yourself or ask a volunteer to introduce it for you.</p></div>
     <a class="button brand-button" href="{{ url_for('film_club_nominate') }}">Nominate a film</a>
 </section>
 
-<section class="venue-section page-shell">
+<section id="plan-your-visit" class="venue-section page-shell">
     <div class="venue-copy">
         <h2>Plan your visit</h2>
         <h3>{{ venue_name }} and Community Centre</h3>
