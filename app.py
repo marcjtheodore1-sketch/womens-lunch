@@ -561,7 +561,12 @@ def set_workplace_setting(key, value):
 
 
 def upsert_workplace_contact(name, email, can_invite, source='AWSS attendee import'):
-    contact = WorkplaceContact.query.filter_by(email=email).first()
+    email = valid_email(email)
+    if not email:
+        return None
+    contact = WorkplaceContact.query.filter(
+        db.func.lower(WorkplaceContact.email) == email
+    ).first()
     if contact:
         if name and not contact.name:
             contact.name = name
@@ -572,6 +577,38 @@ def upsert_workplace_contact(name, email, can_invite, source='AWSS attendee impo
         )
         db.session.add(contact)
     return contact
+
+
+def record_workplace_booking_contact(booking):
+    """Store every AWSS registrant in the editable contact manager."""
+    return upsert_workplace_contact(
+        booking.full_name, booking.email, True, 'AWSS registration'
+    )
+
+
+def sync_workplace_booking_contacts():
+    """Add missing AWSS registrants without overwriting admin checkbox edits."""
+    synced = 0
+    bookings_by_email = {}
+    for booking in WorkplaceBooking.query.order_by(WorkplaceBooking.created_at).all():
+        email = valid_email(booking.email)
+        if email and email not in bookings_by_email:
+            bookings_by_email[email] = booking.full_name
+
+    for email, name in bookings_by_email.items():
+        exists = WorkplaceContact.query.filter(
+            db.func.lower(WorkplaceContact.email) == email
+        ).first()
+        if exists:
+            continue
+        db.session.add(WorkplaceContact(
+            name=name,
+            email=email,
+            can_invite=True,
+            source='AWSS registration backfill',
+        ))
+        synced += 1
+    return synced
 
 
 def next_last_saturdays(start_date=None, count=6):
@@ -1256,6 +1293,7 @@ def init_default_data():
     # Reconcile contacts from earlier Film Club bookings. This also covers
     # bookings made before the contact-management screen was introduced.
     sync_film_booking_contacts()
+    sync_workplace_booking_contacts()
 
     db.session.commit()
 
@@ -2247,9 +2285,7 @@ def workplace_book(session_id):
         cancel_token=secrets.token_urlsafe(32),
     )
     db.session.add(booking)
-    upsert_workplace_contact(
-        full_name, email, True, 'AWSS registration'
-    )
+    record_workplace_booking_contact(booking)
     db.session.commit()
 
     cancel_url = url_for('workplace_cancel', token=booking.cancel_token, _external=True)

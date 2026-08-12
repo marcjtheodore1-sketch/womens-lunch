@@ -325,7 +325,7 @@ button, input, textarea, select { font: inherit; }
 .workplace-button { background: #a92842; color: white; }
 
 /* Autistic Workplace Support public pages */
-.workplace-page { background: var(--page); }
+.workplace-page { background: var(--cream); }
 .workplace-page .brand-button, .workplace-page .button.primary { background: #a92842; color: white; }
 .workplace-page .button.secondary { color: #98233b; border-color: #d88a98; }
 .workplace-page .text-link, .workplace-page .back-link { color: #98233b; }
@@ -348,14 +348,14 @@ button, input, textarea, select { font: inherit; }
 }
 .workplace-story h2, .workplace-for-section h2, .workplace-sessions .section-heading h2, .workplace-venue h2 { color: #98233b; }
 .workplace-programme { margin-top: 1.7rem; display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
-.workplace-programme article { padding: 1.35rem; background: white; border: 3px solid var(--brand-red); border-radius: 12px; box-shadow: 0 2px 8px rgba(30,41,59,.05); }
-.workplace-programme article:nth-child(2) { border-color: var(--brand-yellow); }
-.workplace-programme article:nth-child(3) { border-color: var(--brand-purple); }
+.workplace-programme article { padding: .3rem 1.25rem 1.1rem; background: transparent; border-left: 4px solid var(--brand-red); }
+.workplace-programme article:nth-child(2) { border-left-color: var(--brand-yellow); }
+.workplace-programme article:nth-child(3) { border-left-color: var(--brand-purple); }
 .workplace-programme span { font-size: 1.4rem; }
 .workplace-programme h3 { margin: .2rem 0 .35rem; font-size: 1.08rem; }
 .workplace-programme p:last-child { margin: 0; color: var(--muted); }
 .programme-time { margin: .55rem 0 0; color: #98233b; font-size: .78rem; font-weight: 800; text-transform: uppercase; }
-.workplace-for-section { padding: 4.5rem 0; background: #fff2f4; border-block: 1px solid #f0ccd3; }
+.workplace-for-section { padding: 4.5rem 0; background: transparent; border-top: 1px solid #eee6d2; }
 .workplace-for-grid { display: grid; grid-template-columns: 1.25fr .75fr; gap: 2rem; align-items: start; }
 /* Flowed columns rather than a grid: grid rows are as tall as their tallest
    item, so a wrapped entry left a ragged gap beside a short one. */
@@ -373,12 +373,17 @@ button, input, textarea, select { font: inherit; }
   color: #a92842;
   font-weight: 900;
 }
-.workplace-expect-card { padding: 1.5rem; background: white; border: 3px solid var(--brand-red); border-radius: 12px; }
+.workplace-expect-card { padding: .25rem 0 .25rem 1.5rem; background: transparent; border-left: 4px solid var(--brand-red); }
 .workplace-expect-card h3 { margin-top: 0; color: #98233b; }
 .workplace-expect-card ul { margin-bottom: 0; padding-left: 1.25rem; }
-.workplace-sessions .screening-card { border-color: #d66a7d; }
+.workplace-sessions .screening-card { border: 2px solid #d66a7d; background: #fffaf5; }
 .workplace-sessions .date-ticket strong { color: #98233b; }
+.workplace-sessions .section-kicker { color: #98233b; }
+.workplace-session-card h3 { margin-top: .05rem; color: #7f1d32; font-size: clamp(1.15rem, 2vw, 1.4rem); font-weight: 800; line-height: 1.15; }
+.workplace-session-label { display: inline-block; margin-top: .45rem; color: #98233b; font-size: .67rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.workplace-session-card:not(.unavailable) { box-shadow: 0 7px 20px rgba(152, 35, 59, .1); }
 .workplace-venue { border-color: var(--brand-red); }
+.workplace-page .quick-facts > a:hover strong { color: #98233b; }
 .workplace-page .form-heading h1, .workplace-page .message-shell h1 { color: #98233b; }
 .workplace-page .accessible-form fieldset { border: 2px solid #dc8998; }
 .workplace-page .accessible-form legend { color: #98233b; }

@@ -232,6 +232,47 @@ class FilmNominationAdminTests(unittest.TestCase):
                 ).one().can_invite
             )
 
+    def test_awss_sync_backfills_all_registrants_and_preserves_admin_choice(self):
+        with app_module.app.app_context():
+            workplace_session = app_module.WorkplaceSession(
+                session_date=date(2031, 9, 27),
+                max_attendees=15,
+                is_bookable=True,
+            )
+            app_module.db.session.add(workplace_session)
+            app_module.db.session.flush()
+            app_module.db.session.add_all([
+                app_module.WorkplaceBooking(
+                    workplace_session_id=workplace_session.id,
+                    full_name='First AWSS attendee',
+                    email='AWSS@example.org',
+                    phone='07000000001',
+                    is_adult=True,
+                    cancel_token='awss-contact-one',
+                ),
+                app_module.WorkplaceBooking(
+                    workplace_session_id=workplace_session.id,
+                    full_name='Repeat AWSS attendee',
+                    email='awss@EXAMPLE.org',
+                    phone='07000000002',
+                    is_adult=True,
+                    cancel_token='awss-contact-two',
+                ),
+            ])
+            app_module.db.session.commit()
+
+            self.assertEqual(app_module.sync_workplace_booking_contacts(), 1)
+            app_module.db.session.commit()
+            contact = app_module.WorkplaceContact.query.one()
+            self.assertEqual(contact.email, 'awss@example.org')
+            self.assertTrue(contact.can_invite)
+
+            contact.can_invite = False
+            app_module.db.session.commit()
+            self.assertEqual(app_module.sync_workplace_booking_contacts(), 0)
+            app_module.db.session.commit()
+            self.assertFalse(app_module.WorkplaceContact.query.one().can_invite)
+
 
 if __name__ == '__main__':
     unittest.main()

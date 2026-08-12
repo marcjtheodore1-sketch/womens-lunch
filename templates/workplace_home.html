@@ -19,15 +19,36 @@
     <img class="film-club-logo" src="{{ url_for('static', filename='images/charity_logo.jpg') }}" alt="London Autism Group Charity">
     <h1 class="glow-heading">Autistic Workplace<br>Support Sessions</h1>
     <p class="hero-lede">Free, autistic-led support for autistic adults who want help with work, job searching, workplace issues or future career options.</p>
-    {% if session_cards %}<a class="button brand-button" href="#sessions">View dates and register</a>{% endif %}
+    {% if session_cards %}<a class="button brand-button" href="#upcoming-sessions">View dates and register</a>{% endif %}
   </div>
 </section>
 
-<section class="quick-facts" aria-label="Workplace Support key information">
-  <div><span class="fact-icon" aria-hidden="true">📅</span><p><strong>Last Saturday</strong><br>of every month</p></div>
-  <div><span class="fact-icon" aria-hidden="true">🕐</span><p><strong>1pm–4pm</strong><br>two optional parts</p></div>
-  <div><span class="fact-icon" aria-hidden="true">📍</span><p><strong>{{ venue_name }}</strong><br>Islington, EC1Y 8DY</p></div>
-  <div><span class="fact-icon" aria-hidden="true">🎫</span><p><strong>15 free places</strong><br>autistic adults aged 18+</p></div>
+<section class="quick-facts page-shell" aria-label="Workplace Support key information">
+  <div><span class="fact-icon" aria-hidden="true">📅</span><p><strong>Last Saturday</strong><span>of every month</span></p></div>
+  <div><span class="fact-icon" aria-hidden="true">🕐</span><p><strong>1pm–4pm</strong><span>come to either part or both</span></p></div>
+  <a href="#plan-your-visit"><span class="fact-icon" aria-hidden="true">📍</span><p><strong>{{ venue_name }}</strong><span>Address, access and map ↓</span></p></a>
+  <div><span class="fact-icon" aria-hidden="true">🎫</span><p><strong>15 free places</strong><span>autistic adults aged 18+</span></p></div>
+</section>
+
+<section id="upcoming-sessions" class="screenings-section workplace-sessions">
+  <div class="page-shell">
+    <div class="section-heading"><div><p class="section-kicker">Choose a date</p><h2>Upcoming sessions</h2></div><p>Select one-to-one mentoring, the Speaking Circle, or both when you register. Each date has a maximum of 15 people.</p></div>
+    <div class="screening-grid">
+      {% for card in session_cards %}{% set item=card.session %}
+      <article class="screening-card workplace-session-card{% if card.is_full or not item.is_bookable %} unavailable{% endif %}">
+        <div class="date-ticket"><strong>{{ item.session_date.strftime('%d') }}</strong><span>{{ item.session_date.strftime('%b')|upper }}<br>{{ item.session_date.strftime('%Y') }}</span></div>
+        <div class="screening-info">
+          <p>{{ item.session_date.strftime('%A') }} · 1pm–4pm</p>
+          {% if item.is_bookable and not card.is_full %}<span class="workplace-session-label">Registration open</span>{% endif %}
+          <h3>Autistic Workplace Support Session</h3>
+          {% if item.public_notes %}<p class="film-details">{{ item.public_notes }}</p>{% endif %}
+          {% if card.is_full %}<span class="availability full">Fully booked</span>{% elif not item.is_bookable %}<span class="availability closed">Registration closed</span>{% else %}<span class="availability">{{ card.places_left }} place{% if card.places_left != 1 %}s{% endif %} remaining</span>{% endif %}
+        </div>
+        {% if item.is_bookable and not card.is_full %}<a class="button primary small" href="{{ url_for('workplace_book', session_id=item.id) }}">Register for this session</a>{% endif %}
+      </article>
+      {% else %}<p>No sessions are currently open. Please check back soon.</p>{% endfor %}
+    </div>
+  </div>
 </section>
 
 <section class="story-section page-shell workplace-story">
@@ -48,13 +69,7 @@
 
 <div class="page-shell public-guidelines-wrap">{% include '_community_guidelines.html' %}</div>
 
-<section id="sessions" class="screenings-section workplace-sessions">
-  <div class="page-shell"><div class="section-heading"><div><h2>Upcoming sessions</h2></div><p>Registration covers the parts you select and anybody attending with you. Each date has a maximum of 15 people.</p></div>
-    <div class="screening-grid">{% for card in session_cards %}{% set item=card.session %}<article class="screening-card{% if card.is_full or not item.is_bookable %} unavailable{% endif %}"><div class="date-ticket"><strong>{{ item.session_date.strftime('%d') }}</strong><span>{{ item.session_date.strftime('%b')|upper }}<br>{{ item.session_date.strftime('%Y') }}</span></div><div class="screening-info"><p>{{ item.session_date.strftime('%A') }} · 1pm–4pm</p><h3>Workplace Support Session</h3>{% if item.public_notes %}<p class="film-details">{{ item.public_notes }}</p>{% endif %}{% if card.is_full %}<span class="availability full">Fully booked</span>{% elif not item.is_bookable %}<span class="availability closed">Registration closed</span>{% else %}<span class="availability">{{ card.places_left }} place{% if card.places_left != 1 %}s{% endif %} remaining</span>{% endif %}</div>{% if item.is_bookable and not card.is_full %}<a class="button primary small" href="{{ url_for('workplace_book', session_id=item.id) }}">Register</a>{% endif %}</article>{% else %}<p>No sessions are currently open. Please check back soon.</p>{% endfor %}</div>
-  </div>
-</section>
-
-<section class="venue-section page-shell workplace-venue">
+<section id="plan-your-visit" class="venue-section page-shell workplace-venue">
   <div class="venue-copy"><h2>Plan your visit</h2><h3>{{ venue_name }}</h3><p class="large-address">{{ venue_address }}</p><p>The building is <strong>wheelchair accessible</strong>. There will be at least <strong>two LAGC volunteers</strong> present throughout the session.</p><p>A volunteer will welcome you and show you where the session is taking place.</p><p><a class="text-link" href="{{ map_url }}" target="_blank" rel="noopener">Open in Google Maps →</a></p></div>
   <div class="venue-map"><iframe title="Map showing King Square Community Centre" src="https://www.google.com/maps?q=King+Square+Community+Centre,+Blackwell+House,+Pankhurst+Terrace,+London+EC1Y+8DY&output=embed" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe></div>
   <div class="venue-note-card"><h3>Tell us what would help</h3><p>The registration form includes space for access needs, what support you hope to receive, dietary requirements and information about anybody attending with you.</p></div>
