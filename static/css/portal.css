@@ -213,6 +213,7 @@ button, input, textarea, select { font: inherit; }
 .button.primary, .button.brand-button { background: var(--brand-purple); color: white; }
 .button.secondary { background: white; color: var(--brand-purple-dark); border-color: #b7a5dd; }
 .button.danger { background: var(--danger); color: white; }
+.button.danger-outline { background: white; color: var(--danger); border: 1.5px solid var(--danger); }
 .button.small { min-height: 38px; padding: .45rem .85rem; font-size: .9rem; }
 .text-link, .back-link { color: var(--brand-purple-dark); font-weight: 700; text-underline-offset: 3px; }
 .back-link { display: inline-block; margin-bottom: 1.75rem; }
@@ -851,6 +852,13 @@ th { background: #f1f5f9; font-size: .73rem; text-transform: uppercase; letter-s
 .safeguarding-copy { padding: 0 1.2rem 1rem; }
 .safeguarding-copy p { margin: .75rem 0 0; }
 .admin-card-note { margin: .6rem 0 0; color: var(--muted); font-size: .78rem; }
+.archive-session-form { margin-top: .85rem; padding-top: .85rem; border-top: 1px solid var(--line); }
+.booking-admin-actions { display: grid; gap: .45rem; min-width: 150px; }
+.manual-nomination-card { margin-bottom: 1rem; }
+.manual-nomination-card summary { display: flex; flex-direction: column; cursor: pointer; }
+.manual-nomination-card summary span { color: var(--muted); font-size: .85rem; font-weight: 400; }
+.manual-nomination-card form { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+.archive-toolbar { padding: .75rem 1rem; background: #f8fafc; border-top: 1px solid var(--line); }
 .invitation-session-list { display: grid; gap: .75rem; }
 .invitation-session { padding: .85rem; background: white; border: 1.5px solid #bba7dc; border-radius: 8px; }
 .invitation-session > div:first-child { display: flex; justify-content: space-between; gap: 1rem; }

@@ -1,7 +1,7 @@
 import os
 import tempfile
 import unittest
-from datetime import date
+from datetime import date, timedelta
 
 
 TEST_DATABASE = tempfile.mktemp(prefix='lagc-film-nomination-', suffix='.sqlite')
@@ -50,6 +50,161 @@ class FilmNominationAdminTests(unittest.TestCase):
             },
             follow_redirects=True,
         )
+
+    def test_admin_can_add_emailed_nomination_without_sending_email(self):
+        original_sender = app_module.send_rich_email
+        app_module.send_rich_email = lambda *unused, **unused_kwargs: self.fail(
+            'A manually recorded nomination must not send email.'
+        )
+        try:
+            response = self.client.post(
+                '/admin/film-club/nomination',
+                data={
+                    '_csrf_token': 'test-csrf',
+                    'nominator_name': 'Email nominator',
+                    'nominator_email': 'Nominator@Example.org',
+                    'film_title': 'Moonlight',
+                    'why_this_film': 'It means a great deal to them.',
+                    'introduction_notes': 'They shared some opening thoughts.',
+                    'can_introduce': 'on',
+                },
+                follow_redirects=True,
+            )
+        finally:
+            app_module.send_rich_email = original_sender
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'was added to the nomination list', response.data)
+        with app_module.app.app_context():
+            nomination = app_module.FilmNomination.query.one()
+            self.assertEqual(nomination.film_title, 'Moonlight')
+            self.assertEqual(nomination.nominator_email, 'nominator@example.org')
+            self.assertTrue(nomination.can_introduce)
+
+    def test_admin_can_permanently_delete_cancelled_film_booking(self):
+        with app_module.app.app_context():
+            film_session = app_module.FilmSession(
+                session_date=date(2030, 10, 16), max_attendees=15, is_bookable=True
+            )
+            app_module.db.session.add(film_session)
+            app_module.db.session.flush()
+            booking = app_module.FilmBooking(
+                film_session_id=film_session.id,
+                full_name='Test booking',
+                email='test-booking@example.org',
+                is_adult=True,
+                cancel_token='delete-test-booking',
+                cancelled_at=app_module.datetime.utcnow(),
+            )
+            app_module.db.session.add(booking)
+            app_module.db.session.flush()
+            support = app_module.FilmBookingSupport(
+                film_booking_id=booking.id,
+                attendee_phone='07123456789',
+                attending_with_others=False,
+            )
+            app_module.db.session.add(support)
+            app_module.db.session.commit()
+            booking_id, support_id = booking.id, support.id
+
+        bookings_page = self.client.get('/admin/film-club?tab=bookings')
+        self.assertIn(b'Delete permanently', bookings_page.data)
+
+        response = self.client.post(
+            f'/admin/film-club/booking/{booking_id}/delete',
+            data={'_csrf_token': 'test-csrf'},
+            follow_redirects=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'permanently deleted', response.data)
+        with app_module.app.app_context():
+            self.assertIsNone(app_module.db.session.get(app_module.FilmBooking, booking_id))
+            self.assertIsNone(app_module.db.session.get(app_module.FilmBookingSupport, support_id))
+
+    def test_carer_uses_second_place_from_october_but_not_september(self):
+        with app_module.app.app_context():
+            september = app_module.FilmSession(
+                session_date=date(2026, 9, 16), max_attendees=15, is_bookable=True
+            )
+            october = app_module.FilmSession(
+                session_date=date(2026, 10, 21), max_attendees=15, is_bookable=True
+            )
+            app_module.db.session.add_all([september, october])
+            app_module.db.session.flush()
+            bookings = []
+            for session, token in ((september, 'september-carer'), (october, 'october-carer')):
+                booking = app_module.FilmBooking(
+                    film_session_id=session.id,
+                    full_name='Attendee with carer',
+                    email=f'{token}@example.org',
+                    is_adult=True,
+                    cancel_token=token,
+                )
+                app_module.db.session.add(booking)
+                app_module.db.session.flush()
+                app_module.db.session.add(app_module.FilmBookingSupport(
+                    film_booking_id=booking.id,
+                    attendee_phone='07123456789',
+                    attending_with_others=True,
+                    additional_attendee_count=0,
+                    companion_details='A carer',
+                    has_carer_or_support_worker=True,
+                    carer_name='Carer',
+                ))
+                bookings.append(booking)
+            app_module.db.session.commit()
+
+            self.assertEqual(app_module.booking_party_size(bookings[0]), 1)
+            self.assertEqual(app_module.film_session_summary(september)['places_left'], 14)
+            self.assertEqual(app_module.booking_party_size(bookings[1]), 2)
+            self.assertEqual(app_module.film_session_summary(october)['places_left'], 13)
+
+    def test_completed_session_can_be_archived_and_restored(self):
+        with app_module.app.app_context():
+            past_session = app_module.FilmSession(
+                session_date=date.today() - timedelta(days=1),
+                max_attendees=15,
+                is_bookable=True,
+            )
+            future_session = app_module.FilmSession(
+                session_date=date.today() + timedelta(days=30),
+                max_attendees=15,
+                is_bookable=True,
+            )
+            app_module.db.session.add_all([past_session, future_session])
+            app_module.db.session.commit()
+            past_id, future_id = past_session.id, future_session.id
+
+        blocked = self.client.post(
+            f'/admin/film-club/session/{future_id}/archive',
+            data={'_csrf_token': 'test-csrf'},
+            follow_redirects=True,
+        )
+        self.assertIn(b'only be archived after its date has passed', blocked.data)
+
+        archived = self.client.post(
+            f'/admin/film-club/session/{past_id}/archive',
+            data={'_csrf_token': 'test-csrf'},
+            follow_redirects=True,
+        )
+        self.assertIn(b'Its bookings remain available in the Archive tab', archived.data)
+        with app_module.app.app_context():
+            item = app_module.db.session.get(app_module.FilmSession, past_id)
+            self.assertTrue(item.is_archived)
+            self.assertFalse(item.is_bookable)
+
+        archive_page = self.client.get('/admin/film-club?tab=archive')
+        self.assertIn(b'Archived Film Club sessions', archive_page.data)
+        self.assertIn((date.today() - timedelta(days=1)).strftime('%A %d %B %Y').encode(), archive_page.data)
+
+        restored = self.client.post(
+            f'/admin/film-club/session/{past_id}/restore',
+            data={'_csrf_token': 'test-csrf'},
+            follow_redirects=True,
+        )
+        self.assertIn(b'was restored', restored.data)
+        with app_module.app.app_context():
+            self.assertFalse(app_module.db.session.get(app_module.FilmSession, past_id).is_archived)
 
     def test_same_existing_title_links_without_resending(self):
         session_id, nomination_id = self.add_session_and_nomination(

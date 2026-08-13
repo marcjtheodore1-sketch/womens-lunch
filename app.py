@@ -10,7 +10,7 @@ from flask import (
 )
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
-from datetime import datetime, timedelta, time, timezone
+from datetime import date, datetime, timedelta, time, timezone
 from functools import wraps
 from email.message import EmailMessage
 from html import escape
@@ -129,6 +129,7 @@ class FilmSession(db.Model):
     film_details = db.Column(db.Text, nullable=True)
     max_attendees = db.Column(db.Integer, nullable=False, default=15)
     is_bookable = db.Column(db.Boolean, nullable=False, default=True)
+    is_archived = db.Column(db.Boolean, nullable=False, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
 
@@ -507,9 +508,30 @@ def valid_email(value):
     return value if '@' in value and '.' in value.rsplit('@', 1)[-1] else None
 
 
+FILM_CARER_CAPACITY_START = date(2026, 10, 21)
+
+
+def requested_film_party_size(film_session, additional_attendee_count=0, has_carer=False):
+    """Return capacity used by a Film Club registration.
+
+    From the October 2026 session onwards, a declared carer always occupies a
+    place even if an older or manually-created support record omitted the
+    companion count. September's existing capacity calculation is deliberately
+    left unchanged.
+    """
+    party_size = 1 + max(0, additional_attendee_count or 0)
+    if film_session.session_date >= FILM_CARER_CAPACITY_START and has_carer:
+        party_size = max(2, party_size)
+    return party_size
+
+
 def booking_party_size(booking):
     support = booking.support_details
-    return 1 + (support.additional_attendee_count if support else 0)
+    return requested_film_party_size(
+        booking.session_ref,
+        support.additional_attendee_count if support else 0,
+        support.has_carer_or_support_worker if support else False,
+    )
 
 
 app.jinja_env.globals['booking_party_size'] = booking_party_size
@@ -637,6 +659,7 @@ def film_session_summary(film_session):
         'attendee_count': attendee_count,
         'places_left': max(0, film_session.max_attendees - attendee_count),
         'is_full': attendee_count >= film_session.max_attendees,
+        'can_archive': film_session.session_date < datetime.now().date(),
     }
 
 
@@ -1244,6 +1267,29 @@ def ensure_booking_columns():
 
     return added
 
+
+def ensure_film_session_columns():
+    """Add FilmSession columns needed by newer admin features, preserving data."""
+    added = []
+    try:
+        from sqlalchemy import inspect as sa_inspect, text as sa_text
+
+        inspector = sa_inspect(db.engine)
+        if 'film_session' not in inspector.get_table_names():
+            return added
+        existing = {column['name'] for column in inspector.get_columns('film_session')}
+        if 'is_archived' not in existing:
+            db.session.execute(sa_text(
+                'ALTER TABLE film_session ADD COLUMN is_archived BOOLEAN NOT NULL DEFAULT 0'
+            ))
+            added.append('is_archived')
+            db.session.commit()
+            print('[SCHEMA] Added missing Film Club session column: is_archived')
+    except Exception as exc:
+        db.session.rollback()
+        print(f'[SCHEMA] Could not update the Film Club session table: {exc}')
+    return added
+
 def init_default_data():
     """Initialize default lunch dates and settings"""
     # Create lunch dates if none exist
@@ -1482,7 +1528,8 @@ def access_gate():
 @app.route('/film-club')
 def film_club_home():
     sessions = FilmSession.query.filter(
-        FilmSession.session_date >= datetime.now().date()
+        FilmSession.session_date >= datetime.now().date(),
+        FilmSession.is_archived.is_(False),
     ).order_by(FilmSession.session_date).all()
     return render_template(
         'film_home.html',
@@ -1549,7 +1596,7 @@ def film_club_book(session_id):
         flash('This session is not currently open for booking.', 'error')
         return redirect(url_for('film_club_home'))
 
-    party_size = 1 + additional_count
+    party_size = requested_film_party_size(film_session, additional_count, has_carer)
     refreshed_summary = film_session_summary(film_session)
     if party_size > refreshed_summary['places_left']:
         flash(
@@ -1721,7 +1768,13 @@ def film_club_nominate():
 @app.route('/admin/film-club')
 @admin_required
 def film_club_admin():
-    sessions = FilmSession.query.order_by(FilmSession.session_date).all()
+    sessions = FilmSession.query.filter_by(is_archived=False).order_by(
+        FilmSession.session_date
+    ).all()
+    archived_sessions = FilmSession.query.filter_by(is_archived=True).order_by(
+        FilmSession.session_date.desc()
+    ).all()
+    all_sessions = sessions + archived_sessions
     bookings = FilmBooking.query.join(FilmSession).order_by(
         FilmSession.session_date, FilmBooking.full_name
     ).all()
@@ -1731,6 +1784,8 @@ def film_club_admin():
     return render_template(
         'film_admin.html',
         session_cards=[film_session_summary(item) for item in sessions],
+        archived_session_cards=[film_session_summary(item) for item in archived_sessions],
+        nomination_session_cards=[film_session_summary(item) for item in all_sessions],
         bookings=bookings, nominations=nominations, contacts=contacts,
         news_items=news_items,
         confirmation_subject=get_film_setting(
@@ -1770,6 +1825,24 @@ def film_admin_cancel_booking(booking_id):
     return redirect(url_for('film_club_admin', tab='bookings'))
 
 
+@app.route('/admin/film-club/booking/<int:booking_id>/delete', methods=['POST'])
+@admin_required
+def film_admin_delete_booking(booking_id):
+    """Permanently remove a Film Club booking without sending an email."""
+    require_csrf()
+    booking = FilmBooking.query.get_or_404(booking_id)
+    name = booking.full_name
+    session_date = booking.session_ref.session_date
+    db.session.delete(booking)
+    db.session.commit()
+    flash(
+        f'{name}’s booking for {session_date.strftime("%d %b %Y")} was permanently deleted. '
+        'No email was sent.',
+        'success',
+    )
+    return redirect(url_for('film_club_admin', tab=request.form.get('return_tab', 'bookings')))
+
+
 @app.route('/admin/film-club/session/<int:session_id>', methods=['POST'])
 @admin_required
 def film_admin_update_session(session_id):
@@ -1799,6 +1872,63 @@ def film_admin_update_session(session_id):
     else:
         flash('Session updated.', 'success')
     return redirect(url_for('film_club_admin', tab='sessions'))
+
+
+@app.route('/admin/film-club/session/<int:session_id>/archive', methods=['POST'])
+@admin_required
+def film_admin_archive_session(session_id):
+    require_csrf()
+    film_session = FilmSession.query.get_or_404(session_id)
+    if film_session.session_date >= datetime.now().date():
+        flash('A Film Club session can only be archived after its date has passed.', 'error')
+        return redirect(url_for('film_club_admin', tab='sessions'))
+    film_session.is_archived = True
+    film_session.is_bookable = False
+    db.session.commit()
+    flash(
+        f'{film_session.session_date.strftime("%d %b %Y")} was archived. '
+        'Its bookings remain available in the Archive tab.',
+        'success',
+    )
+    return redirect(url_for('film_club_admin', tab='sessions'))
+
+
+@app.route('/admin/film-club/session/<int:session_id>/restore', methods=['POST'])
+@admin_required
+def film_admin_restore_session(session_id):
+    require_csrf()
+    film_session = FilmSession.query.get_or_404(session_id)
+    film_session.is_archived = False
+    db.session.commit()
+    flash(f'{film_session.session_date.strftime("%d %b %Y")} was restored.', 'success')
+    return redirect(url_for('film_club_admin', tab='archive'))
+
+
+@app.route('/admin/film-club/nomination', methods=['POST'])
+@admin_required
+def film_admin_add_nomination():
+    """Record a nomination received outside the public website form."""
+    require_csrf()
+    name = clean_text(request.form.get('nominator_name'), 200)
+    email = valid_email(request.form.get('nominator_email'))
+    film_title = clean_text(request.form.get('film_title'), 240)
+    why_this_film = clean_text(request.form.get('why_this_film'), 4000)
+    if not all([name, email, film_title, why_this_film]):
+        flash('Name, a valid email, film title and reason are required.', 'error')
+        return redirect(url_for('film_club_admin', tab='nominations'))
+    db.session.add(FilmNomination(
+        nominator_name=name,
+        nominator_email=email,
+        film_title=film_title,
+        why_this_film=why_this_film,
+        introduction_notes=clean_text(request.form.get('introduction_notes'), 4000) or None,
+        can_introduce=request.form.get('can_introduce') == 'on',
+        availability_notes=clean_text(request.form.get('availability_notes'), 2000) or None,
+        content_notes=clean_text(request.form.get('content_notes'), 3000) or None,
+    ))
+    db.session.commit()
+    flash(f'“{film_title}” was added to the nomination list. No email was sent.', 'success')
+    return redirect(url_for('film_club_admin', tab='nominations'))
 
 
 @app.route('/admin/film-club/nomination/<int:nomination_id>', methods=['POST'])
@@ -3204,5 +3334,7 @@ def admin_delete_booking(booking_id):
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
+        ensure_booking_columns()
+        ensure_film_session_columns()
         init_default_data()
     app.run(debug=True, host='0.0.0.0', port=5002)
