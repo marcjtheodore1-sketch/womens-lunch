@@ -537,7 +537,8 @@ button, input, textarea, select { font: inherit; }
   box-shadow: 0 3px 12px rgba(165, 46, 67, .12);
 }
 .film-page #screenings .date-ticket {
-  width: 112px;
+  width: 172px;
+  box-sizing: border-box;
   padding: .6rem .9rem .6rem 0;
   display: flex;
   flex-direction: column;
@@ -547,10 +548,9 @@ button, input, textarea, select { font: inherit; }
   text-decoration: none;
 }
 .film-page #screenings .date-weekday { margin-bottom: .3rem; color: var(--muted); font-size: .73rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
-.film-page #screenings .date-main { display: flex; align-items: baseline; gap: .35rem; }
-.film-page #screenings .date-main strong { color: var(--film-blue-dark); font-size: 2rem; font-weight: 850; }
+.film-page #screenings .date-main { display: flex; align-items: baseline; gap: .4rem; white-space: nowrap; }
+.film-page #screenings .date-main strong { color: var(--film-blue-dark); font-size: 1.65rem; font-weight: 850; }
 .film-page #screenings .date-main span { color: var(--ink); font-size: .9rem; font-weight: 800; }
-.film-page #screenings .date-year { color: var(--muted); font-size: .75rem; font-weight: 700; }
 .film-page #screenings .session-time { margin: .4rem 0 0; color: var(--muted); font-size: .78rem; font-weight: 650; text-transform: none; }
 .screening-info h3 { margin: .2rem 0 .35rem; font-size: 1rem; }
 .screening-card.film-announced {
@@ -1009,8 +1009,13 @@ th { background: #f1f5f9; font-size: .73rem; text-transform: uppercase; letter-s
   .story-steps { grid-template-columns: 1fr; }
   .visit-planning { grid-template-columns: 1fr; }
   .section-heading, .panel-heading, .split-heading { align-items: flex-start; flex-direction: column; }
-  .screening-card { grid-template-columns: auto 1fr; }
-  .film-page #screenings .date-ticket { width: 102px; }
+  .screening-card { grid-template-columns: 1fr; }
+  .film-page #screenings .date-ticket {
+    width: 100%;
+    padding: 0 0 .85rem;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
   .screening-card .button { grid-column: 1 / -1; }
   .nomination-banner, .venue-section { grid-template-columns: 1fr; }
   .workplace-for-grid { grid-template-columns: 1fr; }

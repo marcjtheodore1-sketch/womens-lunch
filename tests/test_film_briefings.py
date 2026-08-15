@@ -35,7 +35,15 @@ class FilmBriefingTests(unittest.TestCase):
         other_session = film_app.FilmSession(
             session_date=date(2026, 10, 21), max_attendees=15
         )
-        film_app.db.session.add_all([self.session, other_session])
+        november_session = film_app.FilmSession(
+            session_date=date(2026, 11, 18), max_attendees=15
+        )
+        january_session = film_app.FilmSession(
+            session_date=date(2027, 1, 20), max_attendees=15
+        )
+        film_app.db.session.add_all([
+            self.session, other_session, november_session, january_session,
+        ])
         film_app.db.session.flush()
         film_app.db.session.add_all([
             film_app.FilmVolunteer(
@@ -100,7 +108,10 @@ class FilmBriefingTests(unittest.TestCase):
         self.assertIn('Fully booked', html)
         self.assertIn('datetime="2026-09-16"', html)
         self.assertIn('Wednesday', html)
-        self.assertIn('September', html)
+        self.assertIn('16th', html)
+        self.assertIn('18th', html)
+        self.assertIn('20th', html)
+        self.assertIn('September 2026', html)
 
     def test_due_job_uses_only_lead_and_session_rota_and_is_idempotent(self):
         sent = []
