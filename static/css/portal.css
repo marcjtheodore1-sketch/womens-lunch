@@ -635,7 +635,18 @@ button, input, textarea, select { font: inherit; }
   box-shadow: var(--shadow);
 }
 .venue-section h3 { margin: 1rem 0 .15rem; }
+.venue-section > .venue-copy { grid-column: 1 / -1; }
 .large-address { margin-top: 0; font-weight: 650; }
+.venue-entrance { margin: 0; }
+.venue-entrance img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  display: block;
+  object-fit: cover;
+  border: 2px solid #8bc2df;
+  border-radius: 9px;
+}
+.venue-entrance figcaption { margin-top: .55rem; color: var(--muted); font-size: .88rem; line-height: 1.45; }
 .venue-map iframe { width: 100%; min-height: 310px; display: block; border: 2px solid #8bc2df; border-radius: 9px; }
 .venue-map .text-link { display: inline-block; margin-top: .55rem; }
 .visit-planning { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(4, 1fr); gap: .75rem; }

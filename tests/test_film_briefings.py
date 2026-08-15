@@ -112,6 +112,8 @@ class FilmBriefingTests(unittest.TestCase):
         self.assertIn('18th', html)
         self.assertIn('20th', html)
         self.assertIn('September 2026', html)
+        self.assertIn('images/artizan-street-library-entrance.jpg', html)
+        self.assertIn('Front entrance to Artizan Street Library', html)
 
     def test_due_job_uses_only_lead_and_session_rota_and_is_idempotent(self):
         sent = []
