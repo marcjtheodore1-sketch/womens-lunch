@@ -54,7 +54,11 @@
             <article class="screening-card{% if item.film_title %} film-announced{% else %} film-pending{% endif %}{% if card.is_full %} fully-booked{% elif not item.is_bookable %} unavailable{% endif %}">
                 <time class="date-ticket" datetime="{{ item.session_date.isoformat() }}" aria-label="{{ item.session_date.strftime('%A') }} {{ day }}{{ day_suffix }} {{ item.session_date.strftime('%B %Y') }}">
                     <span class="date-weekday">{{ item.session_date.strftime('%A') }}</span>
-                    <span class="date-main"><strong>{{ day }}{{ day_suffix }}</strong><span>{{ item.session_date.strftime('%B %Y') }}</span></span>
+                    <span class="date-main">
+                        <strong>{{ day }}{{ day_suffix }}</strong>
+                        <span class="date-month">{{ item.session_date.strftime('%B') }}</span>
+                        <span class="date-year">{{ item.session_date.strftime('%Y') }}</span>
+                    </span>
                 </time>
                 <div class="screening-info">
                     {% if card.is_full %}<strong class="booking-status full"><span aria-hidden="true">●</span> Fully booked</strong>
