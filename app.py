@@ -16,6 +16,7 @@ from email.message import EmailMessage
 from html import escape
 from urllib.parse import quote_plus
 from zoneinfo import ZoneInfo
+import click
 import csv
 import calendar
 import io
@@ -51,6 +52,9 @@ app.config['ACTIVITIES_ADMIN_EMAIL'] = os.environ.get(
     'ACTIVITIES_ADMIN_EMAIL', 'londonautismgroupcharity@gmail.com'
 )
 app.config['ENABLE_EMAIL'] = os.environ.get('ENABLE_EMAIL', 'false').lower() == 'true'
+app.config['FILM_CLUB_LEAD_NAME'] = os.environ.get('FILM_CLUB_LEAD_NAME', 'Itzi')
+app.config['FILM_CLUB_LEAD_EMAIL'] = os.environ.get('FILM_CLUB_LEAD_EMAIL', '')
+app.config['FILM_BRIEFING_SEND_HOUR'] = int(os.environ.get('FILM_BRIEFING_SEND_HOUR', '18'))
 
 # Admin password
 app.config['ADMIN_PASSWORD'] = os.environ.get('ADMIN_PASSWORD', 'change-me-in-pythonanywhere')
@@ -247,6 +251,20 @@ class FilmTitleRecipient(db.Model):
         db.UniqueConstraint(
             'film_session_id', 'film_title', 'recipient_email',
             name='uq_film_title_recipient',
+        ),
+    )
+
+
+class FilmBriefingRecipient(db.Model):
+    """Tracks each successful pre-event briefing delivery for idempotent retries."""
+    id = db.Column(db.Integer, primary_key=True)
+    film_session_id = db.Column(db.Integer, db.ForeignKey('film_session.id'), nullable=False)
+    recipient_email = db.Column(db.String(254), nullable=False)
+    recipient_name = db.Column(db.String(200), nullable=True)
+    sent_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    __table_args__ = (
+        db.UniqueConstraint(
+            'film_session_id', 'recipient_email', name='uq_film_briefing_recipient'
         ),
     )
 
@@ -1092,6 +1110,152 @@ def send_rich_email(to_email, subject, html_message, calendar_content=None):
     except Exception as exc:
         app.logger.exception('Failed to send email: %s', exc)
         return False
+
+
+def film_briefing_recipients(film_session):
+    """Return the configured Film Club lead plus this session's rota only."""
+    recipients = {}
+
+    def add_recipient(name, raw_email):
+        email = valid_email(raw_email)
+        if email:
+            recipients.setdefault(email, clean_text(name, 200) or email)
+
+    lead_name = app.config['FILM_CLUB_LEAD_NAME']
+    lead_email = app.config['FILM_CLUB_LEAD_EMAIL']
+    add_recipient(lead_name, lead_email)
+
+    # Rota assignments are already scoped to one FilmSession. If Itzi's email
+    # is stored there, it can supply the lead address until production moves
+    # that address into configuration.
+    for assignment in film_session.volunteer_assignments:
+        add_recipient(assignment.volunteer_name, assignment.volunteer_email)
+        if (
+            not lead_email
+            and assignment.volunteer_email
+            and assignment.volunteer_name.strip().casefold() == lead_name.strip().casefold()
+        ):
+            add_recipient(lead_name, assignment.volunteer_email)
+
+    if not lead_email and not any(
+        name.strip().casefold() == lead_name.strip().casefold()
+        for name in recipients.values()
+    ):
+        app.logger.warning(
+            'Film Club lead %s has no email configured; set FILM_CLUB_LEAD_EMAIL '
+            'or add them with an email to the session rota.', lead_name,
+        )
+    return recipients
+
+
+def film_briefing_email(film_session):
+    """Build a focused, escaped operational briefing from active registrations."""
+    bookings = FilmBooking.query.filter_by(
+        film_session_id=film_session.id, cancelled_at=None
+    ).order_by(FilmBooking.full_name).all()
+    attendee_count = sum(booking_party_size(booking) for booking in bookings)
+    attendee_sections = []
+    for booking in bookings:
+        support = booking.support_details
+        party_size = booking_party_size(booking)
+        details = [
+            f'<li><strong>Contact on the day:</strong> {escape(support.attendee_phone)}</li>'
+            if support and support.attendee_phone else '',
+            f'<li><strong>Attending with:</strong> {escape(support.companion_details)}</li>'
+            if support and support.attending_with_others and support.companion_details else '',
+            (
+                '<li><strong>Carer/support worker:</strong> '
+                f'{escape(support.carer_name or "Name not provided")}'
+                f'{" · " + escape(support.carer_organisation) if support.carer_organisation else ""}'
+                f'{" · " + escape(support.carer_mobile) if support.carer_mobile else ""}</li>'
+            ) if support and support.has_carer_or_support_worker else '',
+            f'<li><strong>Responsibility/support arrangement:</strong> {escape(support.responsibility_details)}</li>'
+            if support and support.attending_with_others and support.responsibility_details else '',
+            f'<li><strong>Access or sensory needs:</strong> {escape(booking.access_needs)}</li>'
+            if booking.access_needs else '',
+            f'<li><strong>Seating preference:</strong> {escape(booking.seating_preferences)}</li>'
+            if booking.seating_preferences else '',
+            f'<li><strong>Comfort/support information:</strong> {escape(booking.comfort_information)}</li>'
+            if booking.comfort_information else '',
+            f'<li><strong>Dietary requirements or allergies:</strong> {escape(booking.dietary_requirements)}</li>'
+            if booking.dietary_requirements else '',
+        ]
+        useful_details = ''.join(details)
+        if not useful_details:
+            useful_details = '<li>No access, support, seating or dietary information was supplied.</li>'
+        party_label = f' <small>({party_size} places)</small>' if party_size > 1 else ''
+        attendee_sections.append(
+            '<section style="border:1px solid #d8dce5;border-radius:8px;padding:14px;'
+            'margin:12px 0">'
+            f'<h3 style="margin:0 0 6px;color:#3d2374">{escape(booking.full_name)}'
+            f'{party_label}</h3>'
+            f'<ul style="margin:0;padding-left:20px">{useful_details}</ul></section>'
+        )
+
+    title = escape(film_session.film_title or 'Film to be announced')
+    roster = ''.join(attendee_sections) or '<p><strong>There are currently no active registrations.</strong></p>'
+    return f"""<!doctype html><html><body style="font-family:Arial,sans-serif;color:#172033;line-height:1.55;max-width:680px;margin:auto;padding:24px">
+    <div style="background:#f3ecff;border-left:5px solid #6941c6;padding:18px;border-radius:10px">
+      <p style="margin:0 0 4px;text-transform:uppercase;font-size:12px;font-weight:bold;color:#6941c6">Private volunteer briefing</p>
+      <h1 style="font-size:22px;margin:0;color:#3d2374">Autistic Film Club · {film_session.session_date.strftime('%A %d %B %Y')}</h1>
+    </div>
+    <h2 style="font-size:18px;color:#3d2374">Session overview</h2>
+    <p><strong>Film:</strong> {title}<br>
+    <strong>Venue:</strong> {escape(FILM_VENUE_NAME)}, {escape(FILM_VENUE_ADDRESS)}<br>
+    <strong>Time:</strong> arrive from {film_session.arrival_time.strftime('%-I:%M%p').lower()}; finish by {film_session.end_time.strftime('%-I:%M%p').lower()}<br>
+    <strong>Expected attendance:</strong> {attendee_count} people across {len(bookings)} active registration{'s' if len(bookings) != 1 else ''}</p>
+    <h2 style="font-size:18px;color:#3d2374">Attendance and support information</h2>
+    {roster}
+    <div style="background:#fff7d6;border:1px solid #e6b94f;padding:14px;border-radius:8px;margin-top:18px">
+      <strong>Use this information only to prepare for and safely deliver this session.</strong>
+      Please do not forward it or keep it longer than needed. Volunteers are hosts, not carers; where a carer or support worker is attending, responsibility remains with them.
+    </div>
+    <p>Warm wishes,<br><strong>LAGC Autistic Film Club team</strong><br>London Autism Group Charity</p>
+    </body></html>"""
+
+
+def send_due_film_briefings(now=None):
+    """Send tomorrow's briefings after the configured London evening hour."""
+    now_local = now.astimezone(LONDON_TZ) if now else datetime.now(LONDON_TZ)
+    if now_local.hour < app.config['FILM_BRIEFING_SEND_HOUR']:
+        return {'sessions': 0, 'sent': 0, 'failed': 0, 'skipped': 0}
+
+    event_date = now_local.date() + timedelta(days=1)
+    sessions = FilmSession.query.filter_by(session_date=event_date).all()
+    totals = {'sessions': len(sessions), 'sent': 0, 'failed': 0, 'skipped': 0}
+    for film_session in sessions:
+        subject = f'Private volunteer briefing: Film Club {film_session.session_date.strftime("%d %B %Y")}'
+        html = film_briefing_email(film_session)
+        for email, name in film_briefing_recipients(film_session).items():
+            delivered = FilmBriefingRecipient.query.filter_by(
+                film_session_id=film_session.id, recipient_email=email
+            ).first()
+            if delivered:
+                totals['skipped'] += 1
+                continue
+            if send_rich_email(email, subject, html):
+                db.session.add(FilmBriefingRecipient(
+                    film_session_id=film_session.id,
+                    recipient_email=email,
+                    recipient_name=name,
+                ))
+                db.session.commit()
+                totals['sent'] += 1
+            else:
+                db.session.rollback()
+                totals['failed'] += 1
+    return totals
+
+
+@app.cli.command('send-film-briefings')
+def send_film_briefings_command():
+    """Send due Film Club volunteer briefings (safe to run repeatedly)."""
+    totals = send_due_film_briefings()
+    click.echo(
+        'Film Club briefings: '
+        f'{totals["sessions"]} session(s), {totals["sent"]} sent, '
+        f'{totals["failed"]} failed, {totals["skipped"]} already sent.'
+    )
 
 
 def film_confirmation_email(booking, cancel_url, calendar_url):

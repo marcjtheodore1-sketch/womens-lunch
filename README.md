@@ -21,6 +21,7 @@ It also hosts the charity's monthly Autistic Workplace Support Sessions.
 - **Optional Invitations**: A manual, one-use-per-session invitation tool for low numbers
 - **Email Automation**: Editable confirmation copy, session-specific notes and film-announcement notifications
 - **Film Club News**: Optional rotating homepage ticker managed from the Film Club admin area
+- **Film Club Volunteer Briefings**: Private, session-scoped attendance and support briefings sent to the lead and that date's rota on the evening before
 - **Autistic Workplace Support**: Rolling last-Saturday schedule with 15-place registration
 - **Flexible Attendance**: Register for one-to-one mentoring, the confidential Speaking Circle or both
 - **Workplace Support Planning**: Goals, access needs and companion/carer information in a dedicated admin area
@@ -70,6 +71,8 @@ The app will be available at http://localhost:5002
 - `ACTIVITIES_ADMIN_EMAIL`: receives Film Club booking/nomination/cancellation and AWSS registration/cancellation alerts (`londonautismgroupcharity@gmail.com`)
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM`: Women's Lunch mail configuration (`wg.lagc@gmail.com`)
 - `ACTIVITIES_SMTP_HOST`, `ACTIVITIES_SMTP_PORT`, `ACTIVITIES_SMTP_USER`, `ACTIVITIES_SMTP_PASSWORD`, `ACTIVITIES_SMTP_FROM`: Film Club and AWSS mail configuration (`miles.lagc@gmail.com`)
+- `FILM_CLUB_LEAD_NAME`, `FILM_CLUB_LEAD_EMAIL`: the Film Club lead who receives every pre-event briefing (Itzi)
+- `FILM_BRIEFING_SEND_HOUR`: earliest London-time hour at which the evening-before job sends (default `18`)
 - `ENABLE_EMAIL`: set to `true` to enable email sending
 - `COOKIE_SECURE`: set to `true` on the HTTPS production site
 
@@ -128,3 +131,20 @@ Finally, open the PythonAnywhere **Web** tab and press **Reload** for
 Use the included `wsgi.py` for local or conventional WSGI hosting. The live
 PythonAnywhere WSGI file additionally supplies the private production
 environment variables and must not be replaced with a public file.
+
+### Film Club evening-before scheduled task
+
+Run the idempotent Flask command each evening at or after the configured hour,
+using the same environment as the web app:
+
+```bash
+cd /home/londonautismgroupcharity/womens-lunch
+source venv/bin/activate
+flask --app app send-film-briefings
+```
+
+The command uses `Europe/London`, selects only sessions occurring the following
+day, and records each successful session/recipient delivery. It is therefore
+safe for the scheduler to retry. A rota change made before it runs is included;
+rerunning it that evening also delivers to a newly added volunteer without
+resending to recipients already recorded.

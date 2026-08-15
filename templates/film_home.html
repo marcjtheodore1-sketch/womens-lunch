@@ -39,16 +39,20 @@
         <div class="screening-grid">
         {% for card in session_cards %}
             {% set item = card.session %}
-            <article class="screening-card{% if item.film_title %} film-announced{% else %} film-pending{% endif %}{% if card.is_full or not item.is_bookable %} unavailable{% endif %}">
-                <div class="date-ticket"><strong>{{ item.session_date.strftime('%d') }}</strong><span>{{ item.session_date.strftime('%b')|upper }}<br>{{ item.session_date.strftime('%Y') }}</span></div>
+            <article class="screening-card{% if item.film_title %} film-announced{% else %} film-pending{% endif %}{% if card.is_full %} fully-booked{% elif not item.is_bookable %} unavailable{% endif %}">
+                <time class="date-ticket" datetime="{{ item.session_date.isoformat() }}" aria-label="{{ item.session_date.strftime('%A %d %B %Y') }}">
+                    <span class="date-weekday">{{ item.session_date.strftime('%A') }}</span>
+                    <span class="date-main"><strong>{{ item.session_date.strftime('%d') }}</strong><span>{{ item.session_date.strftime('%B') }}</span></span>
+                    <span class="date-year">{{ item.session_date.strftime('%Y') }}</span>
+                </time>
                 <div class="screening-info">
-                    <p>{{ item.session_date.strftime('%A') }} · 5pm–8pm</p>
+                    {% if card.is_full %}<strong class="booking-status full"><span aria-hidden="true">●</span> Fully booked</strong>
+                    {% elif not item.is_bookable %}<strong class="booking-status closed">Bookings closed</strong>{% endif %}
+                    <p class="session-time">5pm–8pm · arrive from 5pm</p>
                     {% if item.film_title %}<span class="film-announced-label">Film announced</span><h3 class="announced-film-title">{{ item.film_title }}</h3>
                     {% else %}<h3 class="pending-film-title">Film to be announced</h3>{% endif %}
                     {% if item.film_details %}<p class="film-details">{{ item.film_details }}</p>{% endif %}
-                    {% if card.is_full %}<span class="availability full">Fully booked</span>
-                    {% elif not item.is_bookable %}<span class="availability closed">Bookings closed</span>
-                    {% else %}<span class="availability">{{ card.places_left }} place{% if card.places_left != 1 %}s{% endif %} remaining</span>{% endif %}
+                    {% if item.is_bookable and not card.is_full %}<span class="availability">{{ card.places_left }} place{% if card.places_left != 1 %}s{% endif %} remaining</span>{% endif %}
                 </div>
                 {% if item.is_bookable and not card.is_full %}<a class="button primary small" href="{{ url_for('film_club_book', session_id=item.id) }}">Book this session</a>{% endif %}
             </article>

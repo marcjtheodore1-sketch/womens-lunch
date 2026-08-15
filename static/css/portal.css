@@ -529,6 +529,29 @@ button, input, textarea, select { font: inherit; }
 .date-ticket strong { color: var(--film-blue-dark); font-size: 1.75rem; font-weight: 800; }
 .date-ticket span { color: var(--muted); font-size: .64rem; font-weight: 800; line-height: 1.25; }
 .screening-info > p:first-child { margin: 0; color: var(--muted); font-size: .73rem; font-weight: 600; text-transform: uppercase; }
+
+.film-page #screenings .screening-card.unavailable { opacity: 1; background: #fafafa; border-color: #cbd5e1; }
+.film-page #screenings .screening-card.fully-booked {
+  background: #fffafb;
+  border-color: var(--danger);
+  box-shadow: 0 3px 12px rgba(165, 46, 67, .12);
+}
+.film-page #screenings .date-ticket {
+  width: 112px;
+  padding: .6rem .9rem .6rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  border-right: 1px solid var(--line);
+  line-height: 1.05;
+  text-decoration: none;
+}
+.film-page #screenings .date-weekday { margin-bottom: .3rem; color: var(--muted); font-size: .73rem; font-weight: 800; text-transform: uppercase; letter-spacing: .04em; }
+.film-page #screenings .date-main { display: flex; align-items: baseline; gap: .35rem; }
+.film-page #screenings .date-main strong { color: var(--film-blue-dark); font-size: 2rem; font-weight: 850; }
+.film-page #screenings .date-main span { color: var(--ink); font-size: .9rem; font-weight: 800; }
+.film-page #screenings .date-year { color: var(--muted); font-size: .75rem; font-weight: 700; }
+.film-page #screenings .session-time { margin: .4rem 0 0; color: var(--muted); font-size: .78rem; font-weight: 650; text-transform: none; }
 .screening-info h3 { margin: .2rem 0 .35rem; font-size: 1rem; }
 .screening-card.film-announced {
   border: 3px solid var(--film-blue);
@@ -568,7 +591,23 @@ button, input, textarea, select { font: inherit; }
 .pending-film-title { color: #566477; font-weight: 600; }
 .film-details { color: var(--muted); font-size: .85rem; }
 .availability { color: var(--success); font-size: .78rem; font-weight: 700; }
-.availability.full, .availability.closed { color: var(--danger); }
+.booking-status {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: .45rem;
+  padding: .38rem .72rem;
+  color: var(--danger);
+  background: #fff0f3;
+  border: 2px solid var(--danger);
+  border-radius: 999px;
+  font-size: .86rem;
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+.booking-status.full span { font-size: .68rem; }
 
 .nomination-banner {
   margin-block: 4.5rem;
@@ -971,6 +1010,7 @@ th { background: #f1f5f9; font-size: .73rem; text-transform: uppercase; letter-s
   .visit-planning { grid-template-columns: 1fr; }
   .section-heading, .panel-heading, .split-heading { align-items: flex-start; flex-direction: column; }
   .screening-card { grid-template-columns: auto 1fr; }
+  .film-page #screenings .date-ticket { width: 102px; }
   .screening-card .button { grid-column: 1 / -1; }
   .nomination-banner, .venue-section { grid-template-columns: 1fr; }
   .workplace-for-grid { grid-template-columns: 1fr; }
