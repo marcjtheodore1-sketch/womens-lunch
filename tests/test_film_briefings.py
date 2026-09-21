@@ -116,6 +116,10 @@ class FilmBriefingTests(unittest.TestCase):
         self.assertIn('18th', html)
         self.assertIn('20th', html)
         self.assertIn('September 2026', html)
+        self.assertIn('30 free places', html)
+        self.assertIn('Each session has 30 places.', html)
+        self.assertNotIn('15 free places', html)
+        self.assertNotIn('Each session has 15 places.', html)
         self.assertIn('images/artizan-street-library-entrance.jpg', html)
         self.assertIn('Front entrance to Artizan Street Library', html)
 
