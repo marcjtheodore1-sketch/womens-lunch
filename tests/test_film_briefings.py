@@ -123,6 +123,7 @@ class FilmBriefingTests(unittest.TestCase):
         self.assertIn('images/film-club-session-setup.jpg', html)
         self.assertIn('A real Film Club evening', html)
         self.assertIn('Film Club attendees seated in a softly lit room', html)
+        self.assertNotIn('places remaining', html)
         self.assertIn('images/artizan-street-library-entrance.jpg', html)
         self.assertIn('Front entrance to Artizan Street Library', html)
 

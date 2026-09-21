@@ -67,7 +67,6 @@
                     {% if item.film_title %}<span class="film-announced-label">Film announced</span><h3 class="announced-film-title">{{ item.film_title }}</h3>
                     {% else %}<h3 class="pending-film-title">Film to be announced</h3>{% endif %}
                     {% if item.film_details %}<p class="film-details">{{ item.film_details }}</p>{% endif %}
-                    {% if item.is_bookable and not card.is_full %}<span class="availability">{{ card.places_left }} place{% if card.places_left != 1 %}s{% endif %} remaining</span>{% endif %}
                 </div>
                 {% if item.is_bookable and not card.is_full %}<a class="button primary small" href="{{ url_for('film_club_book', session_id=item.id) }}">Book this session</a>{% endif %}
             </article>
