@@ -100,7 +100,11 @@ class FilmBriefingTests(unittest.TestCase):
         self.context.pop()
 
     def test_home_makes_full_status_and_date_clear(self):
-        response = self.app.test_client().get('/film-club')
+        # Keep this visual regression fixed to the date represented by the
+        # fixture. The September screening is naturally in the past now.
+        with patch.object(film_app, 'datetime', wraps=datetime) as mocked_datetime:
+            mocked_datetime.now.return_value = datetime(2026, 8, 15)
+            response = self.app.test_client().get('/film-club')
         html = response.get_data(as_text=True)
         self.assertEqual(response.status_code, 200)
         self.assertIn('fully-booked', html)

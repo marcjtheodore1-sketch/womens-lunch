@@ -55,6 +55,9 @@ app.config['ENABLE_EMAIL'] = os.environ.get('ENABLE_EMAIL', 'false').lower() == 
 app.config['FILM_CLUB_LEAD_NAME'] = os.environ.get('FILM_CLUB_LEAD_NAME', 'Itzi')
 app.config['FILM_CLUB_LEAD_EMAIL'] = os.environ.get('FILM_CLUB_LEAD_EMAIL', '')
 app.config['FILM_BRIEFING_SEND_HOUR'] = int(os.environ.get('FILM_BRIEFING_SEND_HOUR', '18'))
+app.config['PUBLIC_BASE_URL'] = os.environ.get(
+    'PUBLIC_BASE_URL', 'https://londonautismgroupcharity.pythonanywhere.com'
+).rstrip('/')
 
 # Admin password
 app.config['ADMIN_PASSWORD'] = os.environ.get('ADMIN_PASSWORD', 'change-me-in-pythonanywhere')
@@ -269,6 +272,40 @@ class FilmBriefingRecipient(db.Model):
     )
 
 
+class FilmReminderPreference(db.Model):
+    """Administrator-controlled reminder stages for one Film Club session."""
+    id = db.Column(db.Integer, primary_key=True)
+    film_session_id = db.Column(
+        db.Integer, db.ForeignKey('film_session.id'), nullable=False, unique=True
+    )
+    fourteen_day_enabled = db.Column(db.Boolean, nullable=False, default=True)
+    seven_day_enabled = db.Column(db.Boolean, nullable=False, default=True)
+    twenty_four_hour_enabled = db.Column(db.Boolean, nullable=False, default=True)
+    session_ref = db.relationship(
+        'FilmSession',
+        backref=db.backref('reminder_preference', uselist=False, cascade='all, delete-orphan'),
+    )
+
+
+class FilmReminderDelivery(db.Model):
+    """A successful attendee reminder delivery, retained for safe retries."""
+    id = db.Column(db.Integer, primary_key=True)
+    film_booking_id = db.Column(db.Integer, db.ForeignKey('film_booking.id'), nullable=False)
+    film_session_id = db.Column(db.Integer, db.ForeignKey('film_session.id'), nullable=False)
+    reminder_kind = db.Column(db.String(30), nullable=False)
+    recipient_email = db.Column(db.String(254), nullable=False)
+    sent_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    booking_ref = db.relationship(
+        'FilmBooking',
+        backref=db.backref('reminder_deliveries', cascade='all, delete-orphan'),
+    )
+    __table_args__ = (
+        db.UniqueConstraint(
+            'film_booking_id', 'reminder_kind', name='uq_film_booking_reminder_kind'
+        ),
+    )
+
+
 class FilmSessionMessage(db.Model):
     """Optional extra confirmation-email message for one Film Club session."""
     id = db.Column(db.Integer, primary_key=True)
@@ -432,6 +469,23 @@ LONDON_TZ = ZoneInfo('Europe/London')
 DEFAULT_FILM_CONFIRMATION_MESSAGE = (
     'Your place is confirmed. We look forward to welcoming you to a relaxed, '
     'autistic-neuroaffirming Film Club session.'
+)
+FILM_REMINDER_STAGES = (
+    {
+        'kind': '14_days', 'label': 'Two weeks before',
+        'email_phrase': 'in two weeks', 'delta': timedelta(days=14),
+        'preference_field': 'fourteen_day_enabled',
+    },
+    {
+        'kind': '7_days', 'label': 'One week before',
+        'email_phrase': 'in one week', 'delta': timedelta(days=7),
+        'preference_field': 'seven_day_enabled',
+    },
+    {
+        'kind': '24_hours', 'label': '24 hours before',
+        'email_phrase': 'in 24 hours', 'delta': timedelta(hours=24),
+        'preference_field': 'twenty_four_hour_enabled',
+    },
 )
 WORKPLACE_VENUE_NAME = 'King Square Community Centre'
 WORKPLACE_VENUE_ADDRESS = 'Blackwell House, Pankhurst Terrace, King Square, London EC1Y 8DY'
@@ -729,6 +783,99 @@ def film_session_datetimes(film_session):
         film_session.session_date, film_session.end_time, tzinfo=LONDON_TZ
     )
     return start_local, end_local
+
+
+def ordinal_number(value):
+    """Format a day of the month with its English ordinal suffix."""
+    if 10 <= value % 100 <= 20:
+        suffix = 'th'
+    else:
+        suffix = {1: 'st', 2: 'nd', 3: 'rd'}.get(value % 10, 'th')
+    return f'{value}{suffix}'
+
+
+def ordinal_date(value, include_weekday=True):
+    prefix = f'{value.strftime("%A")} ' if include_weekday else ''
+    return f'{prefix}{ordinal_number(value.day)} {value.strftime("%B %Y")}'
+
+
+def clock_time(value):
+    return value.strftime('%-I:%M%p').lower().replace(':00', '')
+
+
+def film_reminder_stage_for_time(film_session, now_local):
+    """Return the single reminder stage currently due for a session.
+
+    Stage windows do not overlap. This prevents an outage or a late booking
+    from causing several old reminders to arrive together.
+    """
+    start_local, _ = film_session_datetimes(film_session)
+    if now_local >= start_local:
+        return None
+    for index in range(len(FILM_REMINDER_STAGES) - 1, -1, -1):
+        stage = FILM_REMINDER_STAGES[index]
+        if now_local >= start_local - stage['delta']:
+            return stage
+    return None
+
+
+def film_reminder_stage_enabled(film_session, stage):
+    preference = film_session.reminder_preference
+    if not preference:
+        return True
+    return bool(getattr(preference, stage['preference_field']))
+
+
+def film_reminder_admin_cards(sessions, now=None):
+    """Build concise reminder schedule and delivery data for the admin page."""
+    now_local = now.astimezone(LONDON_TZ) if now and now.tzinfo else (
+        now.replace(tzinfo=LONDON_TZ) if now else datetime.now(LONDON_TZ)
+    )
+    cards = []
+    for film_session in sessions:
+        active_booking_count = FilmBooking.query.filter_by(
+            film_session_id=film_session.id, cancelled_at=None
+        ).count()
+        deliveries = FilmReminderDelivery.query.filter_by(
+            film_session_id=film_session.id
+        ).all()
+        sent_by_kind = {}
+        for delivery in deliveries:
+            sent_by_kind[delivery.reminder_kind] = sent_by_kind.get(delivery.reminder_kind, 0) + 1
+        start_local, _ = film_session_datetimes(film_session)
+        stages = []
+        for stage in FILM_REMINDER_STAGES:
+            due_at = start_local - stage['delta']
+            sent_count = sent_by_kind.get(stage['kind'], 0)
+            if active_booking_count and sent_count >= active_booking_count:
+                state = 'sent'
+            elif sent_count:
+                state = 'partial'
+            elif not film_reminder_stage_enabled(film_session, stage):
+                state = 'off'
+            elif now_local >= start_local:
+                state = 'missed'
+            elif now_local >= due_at:
+                state = 'due'
+            else:
+                state = 'scheduled'
+            stages.append({
+                **stage,
+                'due_at': due_at,
+                'due_label': (
+                    f'{ordinal_date(due_at.date())} at '
+                    f'{clock_time(due_at.time())}'
+                ),
+                'sent_count': sent_count,
+                'state': state,
+                'enabled': film_reminder_stage_enabled(film_session, stage),
+            })
+        cards.append({
+            'session': film_session,
+            'active_booking_count': active_booking_count,
+            'stages': stages,
+        })
+    return cards
 
 
 def google_calendar_url(film_session):
@@ -1300,6 +1447,124 @@ def film_confirmation_email(booking, cancel_url, calendar_url):
     <p style="background:#f8f6fc;padding:14px;border-radius:8px"><strong>Can no longer attend?</strong><br><a href="{cancel_url}">Cancel your place</a> so somebody else can book.</p>
     <p>Warm wishes,<br><strong>LAGC Autistic Film Club team</strong><br>London Autism Group Charity</p>
     </body></html>"""
+
+
+def film_reminder_email(booking, stage, cancel_url, calendar_url):
+    """Create a practical reminder without repeating sensitive registration data."""
+    film_session = booking.session_ref
+    title = escape(film_session.film_title or 'Film to be announced')
+    party_size = booking_party_size(booking)
+    party_note = ''
+    if party_size > 1:
+        party_note = (
+            f'<p><strong>Your booking is for {party_size} people.</strong> '
+            'Everyone included in the booking is expected at the session.</p>'
+        )
+    session_note = ''
+    if film_session.email_message and film_session.email_message.confirmation_note:
+        session_note = (
+            '<div style="background:#fff7d6;border:2px solid #e6b94f;padding:14px;'
+            'border-radius:8px;margin:18px 0"><strong>Important information for this session</strong><br>'
+            f'{html_paragraphs(film_session.email_message.confirmation_note)}</div>'
+        )
+    return f"""<!doctype html><html><body style="font-family:Arial,sans-serif;color:#172033;line-height:1.6;max-width:640px;margin:auto;padding:24px">
+    <div style="background:#f3ecff;border-left:5px solid #6941c6;padding:18px;border-radius:10px">
+      <p style="margin:0 0 4px;text-transform:uppercase;font-size:12px;font-weight:bold;color:#6941c6">Film Club reminder</p>
+      <h1 style="font-size:22px;margin:0;color:#3d2374">Your Film Club session is {stage['email_phrase']}</h1>
+    </div>
+    <p>Hello {escape(booking.full_name)},</p>
+    <p>This is a reminder about your place at the LAGC Autistic Film Club.</p>
+    <h2 style="font-size:18px;color:#3d2374">Session details</h2>
+    <p><strong>Date:</strong> {ordinal_date(film_session.session_date)}<br>
+    <strong>Time:</strong> {clock_time(film_session.arrival_time)}–{clock_time(film_session.end_time)}; arrive from {clock_time(film_session.arrival_time)} and the film begins around {clock_time(film_session.film_start_time)}<br>
+    <strong>Film:</strong> {title}<br>
+    <strong>Venue:</strong> {escape(FILM_VENUE_NAME)}, {escape(FILM_VENUE_ADDRESS)}</p>
+    {party_note}
+    {session_note}
+    <p>Snacks, drinks and sensory items will be available free of charge. You are also welcome to bring your own.</p>
+    {community_guidelines_email_html()}
+    <p><a href="{calendar_url}" style="display:inline-block;background:#6941c6;color:white;padding:11px 16px;border-radius:8px;text-decoration:none">Add to Google Calendar</a></p>
+    <p style="background:#fff4f5;padding:14px;border-radius:8px"><strong>Can no longer attend?</strong><br>
+    Please <a href="{cancel_url}">cancel your place</a> as soon as possible so somebody else can book it.</p>
+    <p>Warm wishes,<br><strong>LAGC Autistic Film Club team</strong><br>London Autism Group Charity</p>
+    </body></html>"""
+
+
+def send_due_film_reminders(now=None):
+    """Send the one currently due reminder stage to every active booking."""
+    now_local = now.astimezone(LONDON_TZ) if now and now.tzinfo else (
+        now.replace(tzinfo=LONDON_TZ) if now else datetime.now(LONDON_TZ)
+    )
+    sessions = FilmSession.query.filter(
+        FilmSession.is_archived.is_(False),
+        FilmSession.session_date >= now_local.date(),
+        FilmSession.session_date <= (now_local + timedelta(days=15)).date(),
+    ).order_by(FilmSession.session_date).all()
+    due_sessions = []
+    for film_session in sessions:
+        stage = film_reminder_stage_for_time(film_session, now_local)
+        if stage:
+            due_sessions.append((film_session, stage))
+
+    totals = {
+        'sessions': len(due_sessions), 'sent': 0, 'failed': 0,
+        'skipped': 0, 'disabled': 0,
+    }
+    for film_session, stage in due_sessions:
+        if not film_reminder_stage_enabled(film_session, stage):
+            totals['disabled'] += 1
+            continue
+        bookings = FilmBooking.query.filter_by(
+            film_session_id=film_session.id, cancelled_at=None
+        ).order_by(FilmBooking.id).all()
+        for booking in bookings:
+            delivered = FilmReminderDelivery.query.filter_by(
+                film_booking_id=booking.id, reminder_kind=stage['kind']
+            ).first()
+            if delivered:
+                totals['skipped'] += 1
+                continue
+            email = valid_email(booking.email)
+            if not email:
+                totals['failed'] += 1
+                continue
+            cancel_url = (
+                f"{app.config['PUBLIC_BASE_URL']}/film-club/cancel/{booking.cancel_token}"
+            )
+            calendar_url = google_calendar_url(film_session)
+            subject = (
+                f"Film Club reminder: {ordinal_date(film_session.session_date, include_weekday=False)}"
+            )
+            if send_rich_email(
+                email,
+                subject,
+                film_reminder_email(booking, stage, cancel_url, calendar_url),
+                film_calendar_ics(film_session, booking),
+            ):
+                db.session.add(FilmReminderDelivery(
+                    film_booking_id=booking.id,
+                    film_session_id=film_session.id,
+                    reminder_kind=stage['kind'],
+                    recipient_email=email,
+                ))
+                db.session.commit()
+                totals['sent'] += 1
+            else:
+                db.session.rollback()
+                totals['failed'] += 1
+    return totals
+
+
+@app.cli.command('send-film-reminders')
+def send_film_reminders_command():
+    """Send due Film Club attendee reminders (safe to run repeatedly)."""
+    totals = send_due_film_reminders()
+    click.echo(
+        'Film Club reminders: '
+        f'{totals["sessions"]} due session(s), {totals["sent"]} sent, '
+        f'{totals["failed"]} failed, {totals["skipped"]} already sent, '
+        f'{totals["disabled"]} disabled.'
+    )
 
 
 def notify_bookers_of_film_title(film_session):
@@ -1958,6 +2223,7 @@ def film_club_admin():
         confirmation_message=get_film_setting(
             'registration_confirmation_message', DEFAULT_FILM_CONFIRMATION_MESSAGE
         ),
+        reminder_cards=film_reminder_admin_cards(sessions),
     )
 
 
@@ -2301,6 +2567,43 @@ def film_admin_email_settings():
     set_film_setting('registration_confirmation_message', message)
     db.session.commit()
     flash('Default Film Club confirmation email updated.', 'success')
+    return redirect(url_for('film_club_admin', tab='emails'))
+
+
+@app.route('/admin/film-club/session/<int:session_id>/reminders', methods=['POST'])
+@admin_required
+def film_admin_reminder_settings(session_id):
+    require_csrf()
+    film_session = FilmSession.query.get_or_404(session_id)
+    preference = film_session.reminder_preference
+    if not preference:
+        preference = FilmReminderPreference(film_session_id=film_session.id)
+        db.session.add(preference)
+    preference.fourteen_day_enabled = request.form.get('fourteen_day_enabled') == 'on'
+    preference.seven_day_enabled = request.form.get('seven_day_enabled') == 'on'
+    preference.twenty_four_hour_enabled = request.form.get('twenty_four_hour_enabled') == 'on'
+    db.session.commit()
+    flash(
+        f'Reminder schedule saved for {ordinal_date(film_session.session_date)}.',
+        'success',
+    )
+    return redirect(url_for('film_club_admin', tab='emails'))
+
+
+@app.route('/admin/film-club/reminders/run', methods=['POST'])
+@admin_required
+def film_admin_run_due_reminders():
+    require_csrf()
+    totals = send_due_film_reminders()
+    if not totals['sessions']:
+        flash('There are no Film Club reminders due right now.', 'success')
+    else:
+        flash(
+            'Reminder check complete: '
+            f'{totals["sent"]} sent, {totals["skipped"]} already sent, '
+            f'{totals["failed"]} failed and {totals["disabled"]} disabled.',
+            'error' if totals['failed'] else 'success',
+        )
     return redirect(url_for('film_club_admin', tab='emails'))
 
 

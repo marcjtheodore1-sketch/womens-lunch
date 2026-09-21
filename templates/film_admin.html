@@ -15,7 +15,7 @@
       </div>
     </details>
     <nav class="admin-tabs" aria-label="Film Club administration">
-        <button type="button" data-tab="sessions">Sessions</button><button type="button" data-tab="bookings">Bookings</button><button type="button" data-tab="nominations">Nominations</button><button type="button" data-tab="rota">Volunteer rota</button><button type="button" data-tab="contacts">Invitations</button><button type="button" data-tab="emails">Confirmation emails</button><button type="button" data-tab="news">News ticker</button><button type="button" data-tab="archive">Archive{% if archived_session_cards %} ({{ archived_session_cards|length }}){% endif %}</button>
+        <button type="button" data-tab="sessions">Sessions</button><button type="button" data-tab="bookings">Bookings</button><button type="button" data-tab="nominations">Nominations</button><button type="button" data-tab="rota">Volunteer rota</button><button type="button" data-tab="contacts">Invitations</button><button type="button" data-tab="emails">Emails &amp; reminders</button><button type="button" data-tab="news">News ticker</button><button type="button" data-tab="archive">Archive{% if archived_session_cards %} ({{ archived_session_cards|length }}){% endif %}</button>
     </nav>
 
     <section class="admin-panel" data-panel="sessions">
@@ -112,7 +112,33 @@
     </section>
 
     <section class="admin-panel" data-panel="emails" hidden>
-      <div class="panel-heading"><div><h2>Registration confirmation emails</h2><p>Edit the standard message for every new Film Club booking, or add a note for one particular session. Changes affect future confirmations only.</p></div></div>
+      <div class="panel-heading"><div><h2>Attendee reminders</h2><p>Every active booker is emailed two weeks, one week and exactly 24 hours before their session. Cancelled bookings are excluded and each successful delivery is recorded to prevent duplicates.</p></div><form method="post" action="{{ url_for('film_admin_run_due_reminders') }}" onsubmit="return confirm('Run the Film Club reminder check now? Only reminders currently due and not already delivered will be sent.')"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><button class="button secondary small" type="submit">Run due reminders now</button></form></div>
+      <div class="reminder-admin-grid">
+        {% for reminder_card in reminder_cards %}{% set item = reminder_card.session %}
+        <form class="admin-card reminder-admin-card" method="post" action="{{ url_for('film_admin_reminder_settings', session_id=item.id) }}">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
+          <div class="admin-card-heading"><div><strong>{{ item.session_date.strftime('%d %b %Y') }}</strong><span>{{ reminder_card.active_booking_count }} active booking{% if reminder_card.active_booking_count != 1 %}s{% endif %}</span></div></div>
+          <div class="reminder-stage-list">
+            {% for stage in reminder_card.stages %}
+            <label class="reminder-stage-row">
+              <input type="checkbox" name="{{ stage.preference_field }}" {% if stage.enabled %}checked{% endif %}>
+              <span><strong>{{ stage.label }}</strong><small>{{ stage.due_label }}</small></span>
+              <span class="reminder-state {{ stage.state }}">
+                {% if stage.state == 'sent' %}Sent {{ stage.sent_count }}/{{ reminder_card.active_booking_count }}
+                {% elif stage.state == 'partial' %}Sent {{ stage.sent_count }}/{{ reminder_card.active_booking_count }}
+                {% elif stage.state == 'off' %}Off
+                {% elif stage.state == 'due' %}Due now
+                {% elif stage.state == 'missed' %}Passed
+                {% else %}Scheduled{% endif %}
+              </span>
+            </label>
+            {% endfor %}
+          </div>
+          <button class="button secondary small" type="submit">Save reminder schedule</button>
+        </form>
+        {% else %}<div class="empty-state">There are no active Film Club sessions.</div>{% endfor %}
+      </div>
+      <div class="panel-heading email-confirmation-heading"><div><h2>Registration confirmation emails</h2><p>Edit the standard message for every new Film Club booking, or add a note for one particular session. Session notes also appear in reminders.</p></div></div>
       <form class="admin-card email-settings-card" method="post" action="{{ url_for('film_admin_email_settings') }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><h3>Default confirmation</h3><label>Email subject<input name="confirmation_subject" maxlength="240" value="{{ confirmation_subject }}" required></label><small>You may use <code>{date}</code> and <code>{film}</code>.</small><label>Opening message<textarea name="confirmation_message" rows="5" required>{{ confirmation_message }}</textarea></label><button class="button primary small" type="submit">Save default email</button></form>
       <div class="session-email-grid">{% for card in session_cards %}{% set item = card.session %}<form class="admin-card" method="post" action="{{ url_for('film_admin_session_email_message', session_id=item.id) }}"><input type="hidden" name="_csrf_token" value="{{ csrf_token() }}"><h3>{{ item.session_date.strftime('%d %b %Y') }}</h3><p>Add timely information for this date only, such as a room change or arrival instruction. Leave blank to remove it.</p><textarea name="confirmation_note" rows="5" placeholder="No extra message for this session">{{ item.email_message.confirmation_note if item.email_message else '' }}</textarea><button class="button secondary small" type="submit">Save session note</button></form>{% endfor %}</div>
     </section>
