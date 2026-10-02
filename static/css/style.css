@@ -1,3 +1,17 @@
+.lunch-alcohol-notice {
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+    border: 1px solid #d69e2e;
+    border-left: 4px solid #b7791f;
+    border-radius: 8px;
+    background: #fffaf0;
+    color: #5f370e;
+}
+
+.lunch-alcohol-notice p {
+    margin-top: 0.35rem;
+}
+
 /* ============================================
    LAGC AUTISTIC WOMEN'S LUNCH — MAIN STYLES
    ============================================ */

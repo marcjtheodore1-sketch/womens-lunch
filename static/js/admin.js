@@ -165,16 +165,19 @@ function renderBookingsByDate(bookings, containerId, isArchive) {
                                 ${escapeHtml(booking.first_name)} ${escapeHtml(booking.last_name)}
                             </div>
                             <div class="booking-order">
-                                ${booking.main_course && booking.drink && booking.main_course !== 'To be decided at the pub' 
-                                    ? escapeHtml(booking.main_course) + ' + ' + escapeHtml(booking.drink)
-                                    : '<em>Order to be decided at the pub</em>'}
+                                ${booking.main_course && booking.main_course !== 'To be decided at the pub'
+                                    ? `<div>Food preference: ${escapeHtml(booking.main_course)}</div>`
+                                    : '<em>Food to be decided at the pub</em>'}
+                                ${booking.drink && booking.drink !== 'To be decided at the pub'
+                                    ? `<div>Non-alcoholic drink preference: ${escapeHtml(booking.drink)}</div>`
+                                    : ''}
                                 ${booking.dietary_requirements ? `<small>🥗 ${escapeHtml(booking.dietary_requirements)}</small>` : ''}
                             </div>
                             <div class="booking-user">
                                 ${escapeHtml(booking.email)}
                                 ${booking.phone ? `<small>📞 ${escapeHtml(booking.phone)}</small>` : ''}
                                 ${booking.is_first_time ? '<small>⭐ First time attending</small>' : ''}
-                                <small>${booking.meeting_preference === 'church' ? '🏛️ Meet at church (11:45 AM)' : '🍺 Meet at pub (12:00 PM)'}</small>
+                                <small>${booking.meeting_preference === 'church' ? 'Previous booking: meet at church (11.45am)' : 'Meet directly at pub (12pm)'}</small>
                                 ${booking.bringing_companion ? `
                                 <span class="companion-flag${booking.supervision_ack ? '' : ' missing-ack'}">
                                     <strong>🧑‍🤝‍🧑 Attending with a carer / support worker</strong><br>
@@ -262,33 +265,34 @@ const DEFAULT_TEMPLATE = `<!DOCTYPE html>
 
     <div class="section">
         <span class="label">Date:</span> {{date}}<br>
-        <span class="label">Time:</span> 12:00 PM - 1:00 PM<br>
-        <span class="label">Venue:</span> Cittie of Yorke, 22 High Holborn, London WC1V 6BN<br>
-        <span class="label">Location:</span> <a href="https://maps.app.goo.gl/Wyh2E9CQU7UqpBCs9">View on Google Maps</a>
+        <span class="label">Time:</span> 12pm to 1pm<br>
+        <span class="label">Venue:</span> Penderel’s Oak, 283-288 High Holborn, London WC1V 7HP<br>
+        <span class="label">Location:</span> <a href="https://www.google.com/maps/search/?api=1&amp;query=Penderel%27s+Oak+283-288+High+Holborn+London+WC1V+7HP">View on Google Maps</a>
+        <p><span class="label">Accessibility:</span> Step-free access and a wheelchair-accessible toilet on the ground floor.</p>
     </div>
 
     <div class="section">
-        <span class="label">Meeting Options:</span>
-        <ul>
-            <li>Meet a volunteer at Holy Sepulchre Church at 11:40 AM (they will walk with you to the pub)</li>
-            <li>Or meet directly at the pub at 12:00 PM</li>
-        </ul>
+        <span class="label">Meeting point:</span>
+        <p>Meet us directly at the pub at 12pm. A charity volunteer will welcome you there.</p>
     </div>
 
     <div class="order-box">
-        <span class="label">Your Order:</span><br>
-        Main: {{main_course}}<br>
-        Drink: {{drink}}
+        <span class="label">Your preferences:</span><br>
+        Food: {{main_course}}<br>
+        Non-alcoholic drink: {{drink}}
         {{dietary_requirements}}
+        <p>These are not guaranteed pre-orders. You can also decide at the pub on the day.</p>
+        <p><a href="https://www.jdwetherspoon.com/pub-menus/penderels-oak-holborn/">View Penderel’s Oak menu</a></p>
     </div>
 
     <div class="section">
         <span class="label">What to expect:</span><br>
         This is a relaxed, neuroaffirming space for autistic women to connect over lunch. You can choose a main course and one non-alcoholic drink which London Autism Group Charity will be happy to cover. There is always at least one charity volunteer onsite to welcome you and help you feel comfortable.
+        <p><strong>The charity will not purchase alcohol.</strong></p>
     </div>
 
     <div class="section">
-        Self-identification is fine — you don't need a formal diagnosis.
+        Self-identification is fine. You don't need a formal diagnosis.
     </div>
 
     <div class="cancel-link">

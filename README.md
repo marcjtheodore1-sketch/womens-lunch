@@ -7,9 +7,12 @@ It also hosts the charity's monthly Autistic Workplace Support Sessions.
 ## Features
 
 - **Monthly Lunch Bookings**: Max 12 attendees per lunch
-- **Menu Selection**: Attendees choose their meal and drink when booking
+- **Food Preferences**: Attendees can share optional food and non-alcoholic drink preferences when booking, or decide at the pub
 - **Budget**: £20 per person (main + non-alcoholic drink)
-- **Venue**: Cittie of Yorke, Holborn
+- **Venue**: Penderel’s Oak, Holborn
+- **Accessibility**: Step-free access and a wheelchair-accessible toilet on the ground floor
+- **Meeting Point**: Meet directly at the pub at 12pm
+- **Alcohol**: The charity covers a main course and one non-alcoholic drink, and will not purchase alcohol
 - **Booking Window**: Only the next upcoming lunch is bookable
 - **Admin Panel**: Manage dates, view bookings, archive past events
 - **Email Notifications**: Automatic confirmation emails
@@ -28,6 +31,15 @@ It also hosts the charity's monthly Autistic Workplace Support Sessions.
 - **Workplace Support Emails**: Confirmation, selected-time calendar invitation, cancellation and editable session notes
 - **Workplace Support Invitations**: Every registration is retained in the AWSS contact list; admins can send a manual, one-use-per-session invitation for low-number dates
 - **Workplace Support News**: Optional admin-managed homepage news ticker
+
+The Women's Lunch venue is Penderel’s Oak, 283-288 High Holborn, London WC1V 7HP.
+The [official pub page](https://www.jdwetherspoon.com/pubs/penderels-oak-holborn/)
+confirms the address and step-free access; the
+[North London CAMRA guide](https://northlondon.camra.org.uk/pubguide) and the
+lunch team's venue report confirm the accessible toilet is on the ground floor.
+The [official menu](https://www.jdwetherspoon.com/pub-menus/penderels-oak-holborn/)
+is linked from the booking page and confirmation email. Preferences are optional,
+are passed to the lunch team, and do not constitute guaranteed pre-orders.
 
 ## Setup
 

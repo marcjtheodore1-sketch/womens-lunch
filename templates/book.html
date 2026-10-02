@@ -16,32 +16,35 @@
             <div class="venue-section-booking">
                 <h2>📍 Venue Details</h2>
                 <div class="venue-info-box">
-                    <h3>Cittie of Yorke</h3>
-                    <p>22 High Holborn, London WC1V 6BN</p>
+                    <h3>Penderel’s Oak</h3>
+                    <p>283-288 High Holborn, London WC1V 7HP</p>
                     <p>
-                        <a href="https://maps.app.goo.gl/Wyh2E9CQU7UqpBCs9" target="_blank" class="map-link">
+                        <a href="https://www.google.com/maps/search/?api=1&amp;query=Penderel%27s+Oak+283-288+High+Holborn+London+WC1V+7HP" target="_blank" rel="noopener noreferrer" class="map-link">
                             View on Google Maps →
                         </a>
                     </p>
-                    <p class="venue-note">A historic Samuel Smith pub with a relaxed atmosphere, tucked away from the busy street.</p>
+                    <p class="venue-note">A Wetherspoon pub on High Holborn.</p>
                     <div class="meeting-info">
-                        <p><strong>🕐 Meeting Options:</strong></p>
-                        <p>You can choose your preferred meeting option when completing your booking below:</p>
-                        <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
-                            <li>Meet a volunteer at Holy Sepulchre Church at 11:45 AM (we'll walk together to the pub)</li>
-                            <li>Meet directly at the pub at 12:00 PM</li>
-                        </ul>
+                        <p><strong>🕐 Meet us directly at the pub at 12pm.</strong></p>
+                        <p>A charity volunteer will welcome you there.</p>
+                    </div>
+                    <div class="meeting-info">
+                        <p><strong>Accessibility</strong></p>
+                        <p>The pub has step-free access and a wheelchair-accessible toilet on the ground floor.</p>
                     </div>
                 </div>
             </div>
 
             <div class="menu-section-booking">
                 <h2>🥣 Menu</h2>
-                <p>Please feel free to view the menu:</p>
-                <a href="https://cittieofyorkeholborn.co.uk/menus/" target="_blank" class="btn btn-secondary">
-                    View Cittie of Yorke Menu →
+                <p>You can browse the menu and tell us your food preferences in advance using the optional fields below. You can also decide at the pub on the day.</p>
+                <a href="https://www.jdwetherspoon.com/pub-menus/penderels-oak-holborn/" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">
+                    View Penderel’s Oak Menu →
                 </a>
-
+                <div class="lunch-alcohol-notice" role="note">
+                    <strong>The charity covers a main course and one non-alcoholic drink.</strong>
+                    <p>The charity will not purchase alcohol.</p>
+                </div>
             </div>
         </div>
 
@@ -53,7 +56,7 @@
             </p>
             <p>
                 <strong>If you need that kind of support during the day, you will need to bring someone with you
-                who provides it</strong> — a carer, support worker, family member or friend.
+                who provides it</strong>, such as a carer, support worker, family member or friend.
             </p>
             <p>
                 Please don't attend on your own if you need that level of support: we aren't equipped for it,
@@ -105,22 +108,17 @@
                     <input type="tel" id="phone">
                 </div>
                 <div class="form-group">
+                    <label for="main-course">Food preference (optional)</label>
+                    <input type="text" id="main-course" maxlength="200" aria-describedby="food-preference-hint" placeholder="The meal you would prefer from the menu">
+                    <small id="food-preference-hint">Let us know in advance if you have a preference. This is not a guaranteed pre-order; you can decide at the pub.</small>
+                </div>
+                <div class="form-group">
+                    <label for="drink">Non-alcoholic drink preference (optional)</label>
+                    <input type="text" id="drink" maxlength="200" placeholder="e.g. juice, tea or a soft drink">
+                </div>
+                <div class="form-group">
                     <label for="dietary">Dietary Requirements or Allergies (optional)</label>
                     <textarea id="dietary" rows="2" placeholder="e.g., Gluten free, Vegetarian, Nut allergy"></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label>How would you prefer to meet us? *</label>
-                    <div class="radio-group">
-                        <label class="radio-label">
-                            <input type="radio" name="meeting-preference" value="church" checked>
-                            Meet a volunteer at Holy Sepulchre Church at 11:45 AM (we'll walk together to the pub)
-                        </label>
-                        <label class="radio-label">
-                            <input type="radio" name="meeting-preference" value="pub">
-                            Meet directly at the pub at 12:00 PM
-                        </label>
-                    </div>
                 </div>
                 
                 <div class="step-actions">

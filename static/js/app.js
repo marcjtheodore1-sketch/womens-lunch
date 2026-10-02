@@ -13,7 +13,6 @@ let state = {
     mainCourse: '',
     drink: '',
     dietary: '',
-    meetingPreference: 'church',
     isFirstTime: true,
     additionalInfo: '',
     bringingCompanion: false,
@@ -33,6 +32,8 @@ function initElements() {
         lastNameInput: document.getElementById('last-name'),
         emailInput: document.getElementById('email'),
         phoneInput: document.getElementById('phone'),
+        mainCourseInput: document.getElementById('main-course'),
+        drinkInput: document.getElementById('drink'),
         dietaryInput: document.getElementById('dietary'),
         additionalInfoInput: document.getElementById('additional-info'),
         companionDetails: document.getElementById('companion-details'),
@@ -228,20 +229,13 @@ function showFinalStep() {
         return;
     }
     
-    // Get meeting preference
-    const meetingRadios = document.getElementsByName('meeting-preference');
-    for (const radio of meetingRadios) {
-        if (radio.checked) {
-            state.meetingPreference = radio.value;
-            break;
-        }
-    }
-    
     // Save to state
     state.firstName = firstName;
     state.lastName = lastName;
     state.email = email;
     state.phone = elements.phoneInput.value.trim();
+    state.mainCourse = elements.mainCourseInput.value.trim();
+    state.drink = elements.drinkInput.value.trim();
     state.dietary = elements.dietaryInput.value.trim();
     
     showStep('final');
@@ -267,6 +261,22 @@ function updateBookingSummary() {
             <span>Date:</span>
             <span>${escapeHtml(dateDisplay)}</span>
         </div>
+        <div class="summary-row">
+            <span>Meeting point:</span>
+            <span>Directly at the pub at 12pm</span>
+        </div>
+        ${state.mainCourse ? `
+        <div class="summary-row">
+            <span>Food preference:</span>
+            <span>${escapeHtml(state.mainCourse)}</span>
+        </div>
+        ` : ''}
+        ${state.drink ? `
+        <div class="summary-row">
+            <span>Non-alcoholic drink preference:</span>
+            <span>${escapeHtml(state.drink)}</span>
+        </div>
+        ` : ''}
         ${state.dietary ? `
         <div class="summary-row">
             <span>Dietary Requirements:</span>
@@ -352,10 +362,9 @@ async function submitBooking() {
         last_name: state.lastName,
         email: state.email,
         phone: state.phone,
-        main_course: '',
-        drink: '',
+        main_course: state.mainCourse,
+        drink: state.drink,
         dietary_requirements: state.dietary,
-        meeting_preference: state.meetingPreference,
         is_first_time: state.isFirstTime,
         additional_info: state.additionalInfo,
         bringing_companion: state.bringingCompanion,
@@ -395,7 +404,6 @@ function resetBooking() {
     state.mainCourse = '';
     state.drink = '';
     state.dietary = '';
-    state.meetingPreference = 'church';
     state.isFirstTime = true;
     state.additionalInfo = '';
     state.bringingCompanion = false;
@@ -409,6 +417,8 @@ function resetBooking() {
     elements.lastNameInput.value = '';
     elements.emailInput.value = '';
     elements.phoneInput.value = '';
+    elements.mainCourseInput.value = '';
+    elements.drinkInput.value = '';
     elements.dietaryInput.value = '';
     elements.additionalInfoInput.value = '';
     elements.companionNameInput.value = '';

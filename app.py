@@ -1110,10 +1110,19 @@ def sync_film_booking_contacts():
 
 def generate_confirmation_message(name, first_name, date_display, main_course, drink, dietary_requirements, cancel_url):
     """Generate a nice HTML confirmation message"""
-    
+    name = escape(name)
+    date_display = escape(date_display)
+    cancel_url = escape(cancel_url, quote=True)
+    preferences = []
+    if main_course:
+        preferences.append(f'<p>Food preference: {escape(main_course)}</p>')
+    if drink:
+        preferences.append(f'<p>Non-alcoholic drink preference: {escape(drink)}</p>')
+    preferences_html = ''.join(preferences)
+
     # Build dietary line if provided
     if dietary_requirements and dietary_requirements.strip():
-        dietary_line = f'<br>- Dietary Requirements: {dietary_requirements}'
+        dietary_line = f'<p>Dietary requirements or allergies: {escape(dietary_requirements)}</p>'
     else:
         dietary_line = ''
     
@@ -1142,17 +1151,15 @@ def generate_confirmation_message(name, first_name, date_display, main_course, d
 
     <div class="section">
         <span class="label">Date:</span> {date_display}<br>
-        <span class="label">Time:</span> 12:00 PM - 1:00 PM<br>
-        <span class="label">Venue:</span> Cittie of Yorke, 22 High Holborn, London WC1V 6BN<br>
-        <span class="label">Location:</span> <a href="https://maps.app.goo.gl/Wyh2E9CQU7UqpBCs9">View on Google Maps</a>
+        <span class="label">Time:</span> 12pm to 1pm<br>
+        <span class="label">Venue:</span> Penderel’s Oak, 283-288 High Holborn, London WC1V 7HP<br>
+        <span class="label">Location:</span> <a href="https://www.google.com/maps/search/?api=1&amp;query=Penderel%27s+Oak+283-288+High+Holborn+London+WC1V+7HP">View on Google Maps</a>
+        <p><span class="label">Accessibility:</span> Step-free access and a wheelchair-accessible toilet on the ground floor.</p>
     </div>
 
     <div class="section">
-        <span class="label">Meeting Options:</span>
-        <ul>
-            <li>Meet a volunteer at Holy Sepulchre Church at 11:40 AM (they will walk with you to the pub)</li>
-            <li>Or meet directly at the pub at 12:00 PM</li>
-        </ul>
+        <span class="label">Meeting point:</span>
+        <p>Meet us directly at the pub at 12pm. A charity volunteer will welcome you there.</p>
     </div>
 
     <div class="section">
@@ -1163,11 +1170,15 @@ def generate_confirmation_message(name, first_name, date_display, main_course, d
     <div class="section">
         <span class="label">Ordering:</span><br>
         You will order and select your meal directly at the pub on the day. The charity will cover your main course and one non-alcoholic drink.
+        <p><a href="https://www.jdwetherspoon.com/pub-menus/penderels-oak-holborn/">View Penderel’s Oak menu</a></p>
+        <p><strong>The charity will not purchase alcohol.</strong></p>
+        {preferences_html}
         {dietary_line}
+        <p>Any preferences you shared have been passed to the lunch team. These are not guaranteed pre-orders.</p>
     </div>
 
     <div class="section">
-        Self-identification is fine — you don't need a formal diagnosis.
+        Self-identification is fine. You don't need a formal diagnosis.
     </div>
 
     <div class="cancel-link">
@@ -1812,9 +1823,9 @@ def get_all_future_dates():
         if not first_admin_bookable and ld.is_bookable:
             first_admin_bookable = {
                 'id': ld.id,
-                'date': ld.lunch_date.strftime('%A, %B %d, %Y'),
+                'date': ordinal_date(ld.lunch_date),
                 'iso_date': ld.lunch_date.isoformat(),
-                'week_of': (ld.lunch_date - timedelta(days=ld.lunch_date.weekday())).strftime('%B %d'),
+                'week_of': ordinal_date(ld.lunch_date - timedelta(days=ld.lunch_date.weekday()), include_weekday=False),
                 'is_full': is_full
             }
         
@@ -1822,9 +1833,9 @@ def get_all_future_dates():
         if not current_bookable and actually_bookable:
             current_bookable = {
                 'id': ld.id,
-                'date': ld.lunch_date.strftime('%A, %B %d, %Y'),
+                'date': ordinal_date(ld.lunch_date),
                 'iso_date': ld.lunch_date.isoformat(),
-                'week_of': (ld.lunch_date - timedelta(days=ld.lunch_date.weekday())).strftime('%B %d')
+                'week_of': ordinal_date(ld.lunch_date - timedelta(days=ld.lunch_date.weekday()), include_weekday=False)
             }
         
         # Track the next date chronologically after the first admin-bookable one
@@ -1832,15 +1843,15 @@ def get_all_future_dates():
         if first_admin_bookable and not next_date_after_full and ld.id != first_admin_bookable['id']:
             next_date_after_full = {
                 'id': ld.id,
-                'date': ld.lunch_date.strftime('%A, %B %d, %Y'),
+                'date': ordinal_date(ld.lunch_date),
                 'iso_date': ld.lunch_date.isoformat(),
-                'week_of': (ld.lunch_date - timedelta(days=ld.lunch_date.weekday())).strftime('%B %d')
+                'week_of': ordinal_date(ld.lunch_date - timedelta(days=ld.lunch_date.weekday()), include_weekday=False)
             }
         
         result.append({
             'id': ld.id,
             'date': ld.lunch_date.isoformat(),
-            'display': ld.lunch_date.strftime('%A, %B %d, %Y'),
+            'display': ordinal_date(ld.lunch_date),
             'admin_bookable': ld.is_bookable,  # Whether admin marked it as bookable
             'is_bookable': actually_bookable,  # Actually bookable (has spots)
             'spots_left': spots_left,
@@ -3360,6 +3371,9 @@ def create_booking():
     main_course = data.get('main_course', '').strip()
     drink = data.get('drink', '').strip()
     is_first_time = data['is_first_time']
+
+    if len(main_course) > 200 or len(drink) > 200:
+        return jsonify({'error': 'Please keep each food or drink preference to 200 characters or fewer'}), 400
     
     # Validate names
     if not first_name or not last_name:
@@ -3428,7 +3442,9 @@ def create_booking():
 
     # Create booking
     cancel_token = secrets.token_urlsafe(32)
-    meeting_preference = data.get('meeting_preference', 'church')
+    # All new bookings meet at the pub, including requests from an older page
+    # that still sends the retired church meeting option.
+    meeting_preference = 'pub'
     booking = Booking(
         lunch_date_id=lunch_date_id,
         first_name=first_name,
@@ -3454,7 +3470,7 @@ def create_booking():
     db.session.commit()
     
     # Generate confirmation message
-    date_display = lunch_date.lunch_date.strftime('%A, %B %d, %Y')
+    date_display = ordinal_date(lunch_date.lunch_date)
     dietary = data.get('dietary_requirements', '').strip()
     cancel_url = f"{request.host_url.rstrip('/')}/cancel/{cancel_token}"
     
@@ -3494,12 +3510,12 @@ Email: {email}
 Phone: {booking.phone or 'Not provided'}
 Date: {date_display}
 
-Order:
-- Main: {main_course or 'To be decided at the pub'}
-- Drink: {drink or 'To be decided at the pub'}
+Preferences shared in advance (not guaranteed pre-orders):
+- Food: {main_course or 'To be decided at the pub'}
+- Non-alcoholic drink: {drink or 'To be decided at the pub'}
 {f"Dietary: {data.get('dietary_requirements', '')}" if data.get('dietary_requirements') else ''}
 
-Meeting Preference: {'Meet at Holy Sepulchre Church at 11:45 AM' if meeting_preference == 'church' else 'Meet at the pub at 12:00 PM'}
+Meeting point: Meet directly at the pub at 12pm
 
 {safeguarding_block}
 
@@ -3508,11 +3524,16 @@ Additional Info: {data.get('additional_info', 'None')}
 
 View all bookings at: {request.host_url.rstrip('/')}/admin
 """
+
+    admin_html = '<div>' + ''.join(
+        f'<p>{"<br>".join(escape(line) for line in paragraph.splitlines())}</p>'
+        for paragraph in admin_message.strip().split('\n\n')
+    ) + '</div>'
     
     send_confirmation_email(
         'wg.lagc@gmail.com',
         f"New Women's Lunch Booking: {first_name} {last_name}",
-        admin_message
+        admin_html
     )
     
     return jsonify({
@@ -3539,7 +3560,7 @@ def get_booking(token):
         'last_name': booking.last_name,
         'email': booking.email,
         'date': booking.lunch_date_ref.lunch_date.isoformat(),
-        'date_display': booking.lunch_date_ref.lunch_date.strftime('%A, %B %d, %Y'),
+        'date_display': ordinal_date(booking.lunch_date_ref.lunch_date),
         'main_course': booking.main_course,
         'drink': booking.drink,
         'dietary_requirements': booking.dietary_requirements,
@@ -3558,7 +3579,7 @@ def cancel_booking(token):
         return jsonify({'error': 'This booking has already been cancelled'}), 410
     
     # Store booking info before cancelling (for email notification)
-    date_display = booking.lunch_date_ref.lunch_date.strftime('%A, %B %d, %Y')
+    date_display = ordinal_date(booking.lunch_date_ref.lunch_date)
     first_name = booking.first_name
     last_name = booking.last_name
     email = booking.email
@@ -3630,7 +3651,7 @@ def get_my_bookings():
                 result.append({
                     'id': booking.id,
                     'date': booking.lunch_date_ref.lunch_date.isoformat(),
-                    'date_display': booking.lunch_date_ref.lunch_date.strftime('%A, %B %d, %Y'),
+                    'date_display': ordinal_date(booking.lunch_date_ref.lunch_date),
                     'main_course': booking.main_course,
                     'drink': booking.drink,
                     'cancel_token': booking.cancel_token
@@ -3664,7 +3685,7 @@ def admin_get_dates():
         result.append({
             'id': ld.id,
             'date': ld.lunch_date.isoformat(),
-            'display': ld.lunch_date.strftime('%A, %B %d, %Y'),
+            'display': ordinal_date(ld.lunch_date),
             'is_bookable': ld.is_bookable,
             'max_attendees': ld.max_attendees,
             'bookings_count': current_bookings,
@@ -3709,7 +3730,7 @@ def admin_get_bookings():
             'email': booking.email,
             'phone': booking.phone,
             'date': booking.lunch_date_ref.lunch_date.isoformat(),
-            'date_display': booking.lunch_date_ref.lunch_date.strftime('%A, %B %d, %Y'),
+            'date_display': ordinal_date(booking.lunch_date_ref.lunch_date),
             'main_course': booking.main_course,
             'drink': booking.drink,
             'dietary_requirements': booking.dietary_requirements,
@@ -3744,7 +3765,7 @@ def admin_get_bookings_archive():
             'email': booking.email,
             'phone': booking.phone,
             'date': booking.lunch_date_ref.lunch_date.isoformat(),
-            'date_display': booking.lunch_date_ref.lunch_date.strftime('%A, %B %d, %Y'),
+            'date_display': ordinal_date(booking.lunch_date_ref.lunch_date),
             'main_course': booking.main_course,
             'drink': booking.drink,
             'dietary_requirements': booking.dietary_requirements,
