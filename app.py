@@ -23,6 +23,7 @@ import io
 import secrets
 import os
 import smtplib
+import ssl
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
@@ -116,6 +117,9 @@ class Booking(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     cancelled_at = db.Column(db.DateTime, nullable=True)
     cancel_token = db.Column(db.String(64), unique=True)
+    # NULL means the legacy application did not record delivery status.
+    confirmation_email_status = db.Column(db.String(20), nullable=True)
+    admin_email_status = db.Column(db.String(20), nullable=True)
     
     lunch_date_ref = db.relationship('LunchDate', backref='bookings')
 
@@ -1210,10 +1214,11 @@ def format_confirmation_message(template, **kwargs):
 
 def send_confirmation_email(to_email, subject, html_message):
     """Send confirmation email with HTML"""
-    if not app.config['ENABLE_EMAIL'] or not app.config['SMTP_USER']:
-        print(f"[EMAIL WOULD BE SENT TO {to_email}]")
-        print(f"Subject: {subject}")
-        return True
+    if not app.config['ENABLE_EMAIL'] or not all(
+        app.config.get(key) for key in ('SMTP_USER', 'SMTP_PASSWORD', 'SMTP_FROM')
+    ):
+        app.logger.error('Lunch email not sent: email is disabled or SMTP configuration is incomplete')
+        return False
     
     try:
         smtp_password = app.config['SMTP_PASSWORD'].replace(' ', '').replace('-', '')
@@ -1226,14 +1231,25 @@ def send_confirmation_email(to_email, subject, html_message):
         # Attach HTML version
         msg.attach(MIMEText(html_message, 'html'))
         
-        with smtplib.SMTP(app.config['SMTP_HOST'], app.config['SMTP_PORT']) as server:
-            server.starttls()
+        context = ssl.create_default_context()
+        port = app.config['SMTP_PORT']
+        server = (
+            smtplib.SMTP_SSL(app.config['SMTP_HOST'], port, timeout=15, context=context)
+            if port == 465 else
+            smtplib.SMTP(app.config['SMTP_HOST'], port, timeout=15)
+        )
+        with server:
+            if port != 465:
+                server.starttls(context=context)
             server.login(app.config['SMTP_USER'], smtp_password)
-            server.send_message(msg)
+            refused = server.send_message(msg)
+            if refused:
+                app.logger.error('Lunch email not accepted: recipient refused')
+                return False
         
         return True
     except Exception as e:
-        print(f"[ERROR] Failed to send email: {e}")
+        app.logger.error('Lunch email failed (%s): %s', type(e).__name__, e)
         return False
 
 
@@ -1680,6 +1696,8 @@ def ensure_booking_columns():
         'companion_mobile': 'VARCHAR(40)',
         'companion_other_names': 'TEXT',
         'supervision_ack': 'BOOLEAN DEFAULT 0',
+        'confirmation_email_status': 'VARCHAR(20)',
+        'admin_email_status': 'VARCHAR(20)',
     }
 
     added = []
@@ -3463,6 +3481,8 @@ def create_booking():
         supervision_ack=supervision_ack,
         is_first_time=is_first_time,
         additional_info=data.get('additional_info', '').strip(),
+        confirmation_email_status='pending',
+        admin_email_status='pending',
         cancel_token=cancel_token
     )
     
@@ -3485,11 +3505,13 @@ def create_booking():
     )
     
     # Send confirmation email to user
-    send_confirmation_email(
+    confirmation_email_sent = send_confirmation_email(
         email,
         f"Booking Confirmed: LAGC Women's Lunch - {date_display}",
         confirmation_message
     )
+    booking.confirmation_email_status = 'accepted' if confirmation_email_sent else 'failed'
+    db.session.commit()
     
     # Send admin notification
     # Safeguarding block for the admin notification
@@ -3530,16 +3552,20 @@ View all bookings at: {request.host_url.rstrip('/')}/admin
         for paragraph in admin_message.strip().split('\n\n')
     ) + '</div>'
     
-    send_confirmation_email(
-        'wg.lagc@gmail.com',
+    admin_email_sent = send_confirmation_email(
+        app.config['ADMIN_EMAIL'],
         f"New Women's Lunch Booking: {first_name} {last_name}",
         admin_html
     )
+    booking.admin_email_status = 'accepted' if admin_email_sent else 'failed'
+    db.session.commit()
     
     return jsonify({
         'success': True,
         'booking_id': booking.id,
         'confirmation_message': confirmation_message,
+        'confirmation_email_sent': confirmation_email_sent,
+        'admin_email_sent': admin_email_sent,
         'cancel_token': cancel_token
     })
 
@@ -3742,6 +3768,8 @@ def admin_get_bookings():
             'companion_other_names': booking.companion_other_names,
             'supervision_ack': booking.supervision_ack,
             'is_first_time': booking.is_first_time,
+            'confirmation_email_status': booking.confirmation_email_status,
+            'admin_email_status': booking.admin_email_status,
             'additional_info': booking.additional_info
         })
     
@@ -3777,6 +3805,8 @@ def admin_get_bookings_archive():
             'companion_other_names': booking.companion_other_names,
             'supervision_ack': booking.supervision_ack,
             'is_first_time': booking.is_first_time,
+            'confirmation_email_status': booking.confirmation_email_status,
+            'admin_email_status': booking.admin_email_status,
             'additional_info': booking.additional_info
         })
     

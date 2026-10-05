@@ -386,6 +386,10 @@ async function submitBooking() {
         
         if (response.ok) {
             elements.confirmationMessage.innerHTML = result.confirmation_message;
+            document.getElementById('confirmation-email-status').textContent =
+                result.confirmation_email_sent === true
+                    ? 'Your booking is saved and the mail server has accepted your confirmation email from wg.lagc@gmail.com. Please check your spam or junk folder too.'
+                    : 'Your booking is saved, but we could not send your confirmation email. Your place is still reserved. Keep the details below and contact wg.lagc@gmail.com if you need help. Please do not book again.';
             showStep('confirmation');
         } else {
             alert(result.error || 'Failed to create booking');

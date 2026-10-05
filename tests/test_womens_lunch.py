@@ -29,7 +29,7 @@ class WomensLunchBookingTests(unittest.TestCase):
             app_module.db.session.commit()
             self.lunch_id = lunch.id
 
-    def book(self, **changes):
+    def book(self, email_results=None, **changes):
         payload = {
             'lunch_date_id': self.lunch_id,
             'first_name': 'Test',
@@ -39,9 +39,70 @@ class WomensLunchBookingTests(unittest.TestCase):
         }
         payload.update(changes)
         # Capture both confirmation and admin notification. Never send a test email.
-        with patch.object(app_module, 'send_confirmation_email', return_value=True) as sender:
+        with patch.object(app_module, 'send_confirmation_email', side_effect=email_results or [True, True]) as sender:
             response = self.client.post('/api/book', json=payload)
         return response, sender
+
+    def test_failed_emails_preserve_booking_and_report_failure(self):
+        response, sender = self.book(email_results=[False, False])
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json['confirmation_email_sent'])
+        self.assertFalse(response.json['admin_email_sent'])
+        self.assertEqual(sender.call_count, 2)
+        with app_module.app.app_context():
+            booking = app_module.Booking.query.one()
+            self.assertEqual(booking.confirmation_email_status, 'failed')
+            self.assertEqual(booking.admin_email_status, 'failed')
+        with self.client.session_transaction() as browser_session:
+            browser_session['admin_logged_in'] = True
+        self.assertEqual(self.client.get('/api/admin/bookings').json[0]['confirmation_email_status'], 'failed')
+        duplicate, _ = self.book()
+        self.assertEqual(duplicate.status_code, 409)
+
+    def test_delivery_results_are_tracked_separately(self):
+        response, _ = self.book(email_results=[True, False])
+        self.assertTrue(response.json['confirmation_email_sent'])
+        self.assertFalse(response.json['admin_email_sent'])
+        with app_module.app.app_context():
+            booking = app_module.Booking.query.one()
+            self.assertEqual(booking.confirmation_email_status, 'accepted')
+            self.assertEqual(booking.admin_email_status, 'failed')
+
+    def test_disabled_email_is_not_reported_as_sent(self):
+        with patch.dict(app_module.app.config, ENABLE_EMAIL=False), patch.object(app_module.smtplib, 'SMTP') as smtp:
+            self.assertFalse(app_module.send_confirmation_email('attendee@example.org', 'Booking', '<p>Booking</p>'))
+            smtp.assert_not_called()
+
+    def test_authentication_failure_does_not_send_message(self):
+        with patch.dict(app_module.app.config, ENABLE_EMAIL=True, SMTP_USER='sender@example.org', SMTP_PASSWORD='invalid', SMTP_FROM='sender@example.org', SMTP_PORT=587), patch.object(app_module.smtplib, 'SMTP') as smtp:
+            connection = smtp.return_value
+            connection.login.side_effect = app_module.smtplib.SMTPAuthenticationError(535, b'Credentials rejected')
+            self.assertFalse(app_module.send_confirmation_email('attendee@example.org', 'Booking', '<p>Booking</p>'))
+            connection.send_message.assert_not_called()
+            self.assertEqual(smtp.call_args.kwargs['timeout'], 15)
+            self.assertTrue(connection.starttls.call_args.kwargs['context'].check_hostname)
+
+    def test_accepted_email_uses_tls_and_checks_recipient_acceptance(self):
+        with patch.dict(app_module.app.config, ENABLE_EMAIL=True, SMTP_USER='sender@example.org', SMTP_PASSWORD='application-password', SMTP_FROM='sender@example.org', SMTP_PORT=587), patch.object(app_module.smtplib, 'SMTP') as smtp:
+            connection = smtp.return_value
+            connection.send_message.return_value = {}
+            self.assertTrue(app_module.send_confirmation_email('attendee@example.org', 'Booking', '<p>Booking</p>'))
+            connection.starttls.assert_called_once()
+            connection.send_message.return_value = {'attendee@example.org': (550, b'Rejected')}
+            self.assertFalse(app_module.send_confirmation_email('attendee@example.org', 'Booking', '<p>Booking</p>'))
+
+    def test_delivery_migration_preserves_legacy_rows_and_unknown_status(self):
+        from sqlalchemy import text
+        with app_module.app.app_context():
+            app_module.db.drop_all()
+            app_module.db.session.execute(text('CREATE TABLE booking (id INTEGER PRIMARY KEY, additional_info TEXT)'))
+            app_module.db.session.execute(text("INSERT INTO booking (id, additional_info) VALUES (1, 'Existing booking')"))
+            app_module.db.session.commit()
+            added = app_module.ensure_booking_columns()
+            self.assertIn('confirmation_email_status', added)
+            self.assertIn('admin_email_status', added)
+            self.assertEqual(app_module.db.session.execute(text('SELECT additional_info, confirmation_email_status, admin_email_status FROM booking')).one(), ('Existing booking', None, None))
+            self.assertEqual(app_module.ensure_booking_columns(), [])
 
     def test_food_only_preference_reaches_database_confirmation_and_admin(self):
         response, sender = self.book(main_course='Vegetarian pie', dietary_requirements='No nuts')

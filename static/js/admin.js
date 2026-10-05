@@ -121,6 +121,14 @@ async function loadArchivedBookings() {
     }
 }
 
+function emailStatusLabel(status) {
+    return {
+        accepted: 'Accepted by mail server',
+        failed: 'Failed to send',
+        pending: 'Send pending'
+    }[status] || 'Not recorded for this earlier booking';
+}
+
 function renderBookingsByDate(bookings, containerId, isArchive) {
     const container = document.getElementById(containerId);
     
@@ -177,6 +185,8 @@ function renderBookingsByDate(bookings, containerId, isArchive) {
                                 ${escapeHtml(booking.email)}
                                 ${booking.phone ? `<small>📞 ${escapeHtml(booking.phone)}</small>` : ''}
                                 ${booking.is_first_time ? '<small>⭐ First time attending</small>' : ''}
+                                <small>Confirmation email: ${emailStatusLabel(booking.confirmation_email_status)}</small>
+                                <small>Team notification: ${emailStatusLabel(booking.admin_email_status)}</small>
                                 <small>${booking.meeting_preference === 'church' ? 'Previous booking: meet at church (11.45am)' : 'Meet directly at pub (12pm)'}</small>
                                 ${booking.bringing_companion ? `
                                 <span class="companion-flag${booking.supervision_ack ? '' : ' missing-ack'}">
