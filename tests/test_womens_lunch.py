@@ -104,6 +104,17 @@ class WomensLunchBookingTests(unittest.TestCase):
             self.assertEqual(app_module.db.session.execute(text('SELECT additional_info, confirmation_email_status, admin_email_status FROM booking')).one(), ('Existing booking', None, None))
             self.assertEqual(app_module.ensure_booking_columns(), [])
 
+    def test_activities_transport_uses_existing_sender_and_lunch_reply_address(self):
+        with patch.dict(app_module.app.config, ENABLE_EMAIL=True, LUNCH_EMAIL_TRANSPORT='activities', ACTIVITIES_SMTP_HOST='smtp.example.org', ACTIVITIES_SMTP_PORT=587, ACTIVITIES_SMTP_USER='activities@example.org', ACTIVITIES_SMTP_PASSWORD='existing-password', ACTIVITIES_SMTP_FROM='activities@example.org', ADMIN_EMAIL='lunch@example.org'), patch.object(app_module.smtplib, 'SMTP') as smtp:
+            connection = smtp.return_value
+            connection.send_message.return_value = {}
+            self.assertTrue(app_module.send_confirmation_email('attendee@example.org', 'Booking', '<p>Booking</p>'))
+            connection.login.assert_called_once_with('activities@example.org', 'existingpassword')
+            message = connection.send_message.call_args.args[0]
+            self.assertEqual(message['From'], 'activities@example.org')
+            self.assertEqual(message['Reply-To'], 'lunch@example.org')
+            self.assertEqual(message['To'], 'attendee@example.org')
+
     def test_food_only_preference_reaches_database_confirmation_and_admin(self):
         response, sender = self.book(main_course='Vegetarian pie', dietary_requirements='No nuts')
         self.assertEqual(response.status_code, 200)

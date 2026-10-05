@@ -53,6 +53,7 @@ app.config['ACTIVITIES_ADMIN_EMAIL'] = os.environ.get(
     'ACTIVITIES_ADMIN_EMAIL', 'londonautismgroupcharity@gmail.com'
 )
 app.config['ENABLE_EMAIL'] = os.environ.get('ENABLE_EMAIL', 'false').lower() == 'true'
+app.config['LUNCH_EMAIL_TRANSPORT'] = os.environ.get('LUNCH_EMAIL_TRANSPORT', 'lunch')
 app.config['FILM_CLUB_LEAD_NAME'] = os.environ.get('FILM_CLUB_LEAD_NAME', 'Itzi')
 app.config['FILM_CLUB_LEAD_EMAIL'] = os.environ.get('FILM_CLUB_LEAD_EMAIL', '')
 app.config['FILM_BRIEFING_SEND_HOUR'] = int(os.environ.get('FILM_BRIEFING_SEND_HOUR', '18'))
@@ -1214,17 +1215,19 @@ def format_confirmation_message(template, **kwargs):
 
 def send_confirmation_email(to_email, subject, html_message):
     """Send confirmation email with HTML"""
+    prefix = 'ACTIVITIES_' if app.config['LUNCH_EMAIL_TRANSPORT'] == 'activities' else ''
     if not app.config['ENABLE_EMAIL'] or not all(
-        app.config.get(key) for key in ('SMTP_USER', 'SMTP_PASSWORD', 'SMTP_FROM')
+        app.config.get(prefix + key) for key in ('SMTP_USER', 'SMTP_PASSWORD', 'SMTP_FROM')
     ):
         app.logger.error('Lunch email not sent: email is disabled or SMTP configuration is incomplete')
         return False
     
     try:
-        smtp_password = app.config['SMTP_PASSWORD'].replace(' ', '').replace('-', '')
+        smtp_password = app.config[prefix + 'SMTP_PASSWORD'].replace(' ', '').replace('-', '')
         
         msg = MIMEMultipart('alternative')
-        msg['From'] = app.config['SMTP_FROM']
+        msg['From'] = app.config[prefix + 'SMTP_FROM']
+        msg['Reply-To'] = app.config['ADMIN_EMAIL']
         msg['To'] = to_email
         msg['Subject'] = subject
         
@@ -1232,16 +1235,16 @@ def send_confirmation_email(to_email, subject, html_message):
         msg.attach(MIMEText(html_message, 'html'))
         
         context = ssl.create_default_context()
-        port = app.config['SMTP_PORT']
+        port = app.config[prefix + 'SMTP_PORT']
         server = (
-            smtplib.SMTP_SSL(app.config['SMTP_HOST'], port, timeout=15, context=context)
+            smtplib.SMTP_SSL(app.config[prefix + 'SMTP_HOST'], port, timeout=15, context=context)
             if port == 465 else
-            smtplib.SMTP(app.config['SMTP_HOST'], port, timeout=15)
+            smtplib.SMTP(app.config[prefix + 'SMTP_HOST'], port, timeout=15)
         )
         with server:
             if port != 465:
                 server.starttls(context=context)
-            server.login(app.config['SMTP_USER'], smtp_password)
+            server.login(app.config[prefix + 'SMTP_USER'], smtp_password)
             refused = server.send_message(msg)
             if refused:
                 app.logger.error('Lunch email not accepted: recipient refused')
@@ -3566,6 +3569,9 @@ View all bookings at: {request.host_url.rstrip('/')}/admin
         'confirmation_message': confirmation_message,
         'confirmation_email_sent': confirmation_email_sent,
         'admin_email_sent': admin_email_sent,
+        'confirmation_email_from': app.config[
+            'ACTIVITIES_SMTP_FROM' if app.config['LUNCH_EMAIL_TRANSPORT'] == 'activities' else 'SMTP_FROM'
+        ],
         'cancel_token': cancel_token
     })
 

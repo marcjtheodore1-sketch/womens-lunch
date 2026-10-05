@@ -67,6 +67,13 @@ The app will be available at http://localhost:5002
 
 ## Admin Access
 
+Lunch email defaults to the dedicated lunch mailbox. Set `LUNCH_EMAIL_TRANSPORT=activities`
+in the private PythonAnywhere configuration to use the already configured activities
+SMTP mailbox instead. Replies continue to go to `ADMIN_EMAIL`. Booking records store
+separate confirmation and team-notification statuses; `accepted` means the mail server
+accepted the message, not verified inbox delivery. Earlier untracked bookings remain
+unknown. The booking page reports a failed send without cancelling the reservation.
+
 - Film Club URL: `/admin/film-club`
 - Workplace Support URL: `/admin/workplace-support`
 - Women's Lunch URL: `/admin/womens-lunch`
