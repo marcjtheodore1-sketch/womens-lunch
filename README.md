@@ -15,6 +15,8 @@ It also hosts the charity's monthly Autistic Workplace Support Sessions.
 - **Alcohol**: The charity covers a main course and one non-alcoholic drink, and will not purchase alcohol
 - **Booking Window**: Only the next upcoming lunch is bookable
 - **Admin Panel**: Manage dates, view bookings, archive past events
+- **Lunch Attendance**: A mobile-friendly register with attendance, missed lunches,
+  cancellation timing, factual notes, corrections and a 12-month history
 - **Email Notifications**: Automatic confirmation emails
 - **Activities Gateway**: Root page links to both activity websites
 - **Autistic Film Club**: Six-month schedule, 15-place registration, film nominations and cancellations
@@ -80,6 +82,47 @@ unknown. The booking page reports a failed send without cancelling the reservati
 - Film Club and Women's Lunch password: supplied through `ADMIN_PASSWORD`
 - Workplace Support password: supplied separately through `WORKPLACE_ADMIN_PASSWORD`
 - There are no production passwords in the source
+
+### Women's Lunch attendance
+
+The **Attendance** tab opens first in the existing Women's Lunch admin area.
+Choose a lunch date and tap **Attended**, **Did not attend**, **Cancelled** or
+**Late cancellation** beside each person. Each choice saves immediately; a
+message confirms the save. Notes are optional and save with a choice or with
+**Save note**. **Clear manual choice** removes the manual status, leaving any
+saved note and restoring an automatic cancellation status where applicable.
+
+Online cancellations remain in the register and are classified using the
+recorded cancellation time. A late cancellation is less than 24 hours before
+the 12pm London-time start, including cancellations after the start. Exactly
+24 hours is a normal cancellation. Hosts can correct a classification when
+someone gave earlier notice by phone or in person, adding a brief factual note.
+Recording a manual cancellation here is for attendance reporting only; it does
+not send emails or change booking capacity.
+
+Attendance can be recorded from 12pm on the lunch date. **Did not attend** is
+available from 1pm, after the lunch finishes, and is blocked for bookings that
+were cancelled online. Refresh the register when one of these times is reached.
+Past unchecked bookings stay **Not recorded**, never inferred as absences.
+
+**Attendance history and patterns** covers the past 12 months. It groups booking
+records by email address, ignoring case and surrounding spaces; shared addresses
+may represent more than one person. Search or filter the history and expand a
+person to see the individual dates and notes. Older registers are still available
+in the date selector. These records never automatically restrict future bookings.
+The download button exports the selected register as a CSV, with London-time
+timestamps. The register is private to the existing admin login.
+
+Saved corrections are retained under **Note and changes**, with timestamps.
+Because the team shares an admin login, these timestamps do not identify which
+volunteer made a change. Simultaneous edits return a conflict message instead
+of silently overwriting another host's work.
+
+Deployment adds four nullable/defaulted columns to `booking` through the existing
+`ensure_booking_columns()` migration and creates `lunch_attendance_change` through
+`db.create_all()`. Back up the live SQLite database before running both steps,
+verify the booking row count is unchanged, then reload the web app. Existing
+attendance starts unknown; existing online cancellation times are preserved.
 
 ## Environment Variables
 

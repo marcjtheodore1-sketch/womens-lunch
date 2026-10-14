@@ -10,6 +10,7 @@ from flask import (
 )
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import update, func
 from datetime import date, datetime, timedelta, time, timezone
 from functools import wraps
 from email.message import EmailMessage
@@ -121,8 +122,25 @@ class Booking(db.Model):
     # NULL means the legacy application did not record delivery status.
     confirmation_email_status = db.Column(db.String(20), nullable=True)
     admin_email_status = db.Column(db.String(20), nullable=True)
+    attendance_status = db.Column(db.String(20), nullable=True)
+    attendance_note = db.Column(db.Text, nullable=True)
+    attendance_updated_at = db.Column(db.DateTime, nullable=True)
+    attendance_version = db.Column(db.Integer, nullable=False, default=0)
     
     lunch_date_ref = db.relationship('LunchDate', backref='bookings')
+    attendance_changes = db.relationship(
+        'LunchAttendanceChange', cascade='all, delete-orphan',
+        order_by='LunchAttendanceChange.id',
+    )
+
+
+class LunchAttendanceChange(db.Model):
+    """Corrections made through the shared lunch admin account."""
+    id = db.Column(db.Integer, primary_key=True)
+    booking_id = db.Column(db.Integer, db.ForeignKey('booking.id'), nullable=False, index=True)
+    status = db.Column(db.String(20), nullable=True)
+    note = db.Column(db.Text, nullable=True)
+    recorded_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
 class Setting(db.Model):
     """Configurable settings"""
@@ -567,6 +585,8 @@ def add_security_headers(response):
     response.headers.setdefault('X-Frame-Options', 'SAMEORIGIN')
     response.headers.setdefault('Referrer-Policy', 'strict-origin-when-cross-origin')
     response.headers.setdefault('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+    if request.path.startswith('/api/admin/lunch-attendance'):
+        response.headers['Cache-Control'] = 'no-store'
     return response
 
 
@@ -1701,6 +1721,10 @@ def ensure_booking_columns():
         'supervision_ack': 'BOOLEAN DEFAULT 0',
         'confirmation_email_status': 'VARCHAR(20)',
         'admin_email_status': 'VARCHAR(20)',
+        'attendance_status': 'VARCHAR(20)',
+        'attendance_note': 'TEXT',
+        'attendance_updated_at': 'DATETIME',
+        'attendance_version': 'INTEGER NOT NULL DEFAULT 0',
     }
 
     added = []
@@ -3700,6 +3724,193 @@ def get_my_bookings():
 # ============================================================================
 # ADMIN API ENDPOINTS
 # ============================================================================
+
+LUNCH_ATTENDANCE_LABELS = {
+    'unrecorded': 'Not recorded',
+    'attended': 'Attended',
+    'no_show': 'Did not attend',
+    'cancelled': 'Cancelled',
+    'late_cancelled': 'Late cancellation',
+}
+
+
+def lunch_start_utc(lunch):
+    return datetime.combine(lunch.lunch_date, time(12), ZoneInfo('Europe/London')).astimezone(timezone.utc)
+
+
+def lunch_attendance_status(booking):
+    if booking.attendance_status:
+        return booking.attendance_status
+    if booking.cancelled_at:
+        cancelled = booking.cancelled_at.replace(tzinfo=timezone.utc)
+        return 'late_cancelled' if cancelled > lunch_start_utc(booking.lunch_date_ref) - timedelta(hours=24) else 'cancelled'
+    return 'unrecorded'
+
+
+def lunch_attendance_record(booking):
+    status = lunch_attendance_status(booking)
+    return {
+        'id': booking.id,
+        'name': f'{booking.first_name} {booking.last_name}',
+        'email': booking.email,
+        'status': status,
+        'status_label': LUNCH_ATTENDANCE_LABELS[status],
+        'manual_status': booking.attendance_status,
+        'note': booking.attendance_note or '',
+        'version': booking.attendance_version or 0,
+        'updated_at': booking.attendance_updated_at.isoformat() + 'Z' if booking.attendance_updated_at else None,
+        'cancelled_at': booking.cancelled_at.isoformat() + 'Z' if booking.cancelled_at else None,
+        'automatic_cancellation': bool(booking.cancelled_at and not booking.attendance_status),
+        'date': booking.lunch_date_ref.lunch_date.isoformat(),
+        'date_display': ordinal_date(booking.lunch_date_ref.lunch_date),
+    }
+
+
+@app.route('/api/admin/lunch-attendance/dates')
+@admin_required
+def lunch_attendance_dates():
+    now = datetime.now(timezone.utc)
+    dates = LunchDate.query.order_by(LunchDate.lunch_date.desc()).all()
+    result = []
+    for lunch in dates:
+        records = [lunch_attendance_status(booking) for booking in lunch.bookings]
+        result.append({
+            'id': lunch.id, 'date': lunch.lunch_date.isoformat(),
+            'display': ordinal_date(lunch.lunch_date, include_weekday=False), 'bookings': len(records),
+            'unrecorded': records.count('unrecorded'),
+            'can_record': now >= lunch_start_utc(lunch),
+        })
+    return jsonify(result)
+
+
+@app.route('/api/admin/lunch-attendance/<int:date_id>')
+@admin_required
+def lunch_attendance_register(date_id):
+    lunch = db.get_or_404(LunchDate, date_id)
+    now = datetime.now(timezone.utc)
+    bookings = Booking.query.filter_by(lunch_date_id=date_id).order_by(
+        func.lower(Booking.first_name), func.lower(Booking.last_name), Booking.id
+    ).all()
+    records = [lunch_attendance_record(booking) for booking in bookings]
+    response = jsonify({
+        'id': lunch.id, 'display': ordinal_date(lunch.lunch_date),
+        'can_record': now >= lunch_start_utc(lunch),
+        'can_record_absence': now >= lunch_start_utc(lunch) + timedelta(hours=1),
+        'records': records,
+        'counts': {status: sum(item['status'] == status for item in records) for status in LUNCH_ATTENDANCE_LABELS},
+    })
+    response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
+@app.route('/api/admin/lunch-attendance/booking/<int:booking_id>', methods=['POST'])
+@admin_required
+def lunch_attendance_save(booking_id):
+    require_csrf()
+    booking = db.get_or_404(Booking, booking_id)
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return jsonify(error='Choose an attendance option and try again.'), 400
+    status, note, version = data.get('status'), data.get('note', ''), data.get('version')
+    if 'status' not in data or (status is not None and (not isinstance(status, str) or status not in LUNCH_ATTENDANCE_LABELS or status == 'unrecorded')):
+        return jsonify(error='Choose a valid attendance option.'), 400
+    if not isinstance(note, str) or len(note) > 1000:
+        return jsonify(error='Keep the note to 1,000 characters or fewer.'), 400
+    if type(version) is not int or version < 0:
+        return jsonify(error='Refresh the register before saving.'), 400
+    now = datetime.now(timezone.utc)
+    start = lunch_start_utc(booking.lunch_date_ref)
+    if now < start:
+        return jsonify(error='Attendance can be recorded from 12pm on the lunch date.'), 400
+    if status == 'no_show' and now < start + timedelta(hours=1):
+        return jsonify(error='Wait until lunch finishes at 1pm before recording that someone did not attend.'), 400
+    if booking.cancelled_at and status == 'no_show':
+        return jsonify(error='This person cancelled their booking. Choose a cancellation option instead.'), 400
+    changed_at = now.replace(tzinfo=None)
+    # A shared admin account can be open on several devices. Never silently
+    # overwrite another volunteer's update made since this register was loaded.
+    changed = db.session.execute(update(Booking).where(
+        Booking.id == booking_id, Booking.attendance_version == version
+    ).values(
+        attendance_status=status, attendance_note=note.strip() or None,
+        attendance_updated_at=changed_at, attendance_version=version + 1,
+    ))
+    if changed.rowcount != 1:
+        db.session.rollback()
+        return jsonify(error='Someone else updated this booking. Refresh the register, check their change and try again.'), 409
+    db.session.add(LunchAttendanceChange(
+        booking_id=booking_id, status=status, note=note.strip() or None, recorded_at=changed_at,
+    ))
+    db.session.commit()
+    return jsonify(lunch_attendance_record(db.session.get(Booking, booking_id)))
+
+
+@app.route('/api/admin/lunch-attendance/booking/<int:booking_id>/changes')
+@admin_required
+def lunch_attendance_changes(booking_id):
+    booking = db.get_or_404(Booking, booking_id)
+    return jsonify([{
+        'status_label': LUNCH_ATTENDANCE_LABELS.get(change.status, 'Manual choice cleared'),
+        'note': change.note or '', 'recorded_at': change.recorded_at.isoformat() + 'Z',
+    } for change in reversed(booking.attendance_changes)])
+
+
+@app.route('/api/admin/lunch-attendance/history')
+@admin_required
+def lunch_attendance_history():
+    today = datetime.now(ZoneInfo('Europe/London')).date()
+    since = today.replace(year=today.year - 1, day=min(today.day, calendar.monthrange(today.year - 1, today.month)[1]))
+    bookings = Booking.query.join(LunchDate).filter(
+        LunchDate.lunch_date >= since, LunchDate.lunch_date <= today,
+    ).order_by(LunchDate.lunch_date.desc(), Booking.id.desc()).all()
+    people = {}
+    now = datetime.now(timezone.utc)
+    for booking in bookings:
+        if lunch_start_utc(booking.lunch_date_ref) > now:
+            continue
+        key = booking.email.strip().casefold()
+        if key not in people:
+            people[key] = {
+                'name': f'{booking.first_name} {booking.last_name}', 'email': booking.email,
+                'counts': {status: 0 for status in LUNCH_ATTENDANCE_LABELS}, 'records': [],
+            }
+        person = people[key]
+        record = lunch_attendance_record(booking)
+        person['counts'][record['status']] += 1
+        person['records'].append(record)
+    response = jsonify({
+        'since': ordinal_date(since, include_weekday=False),
+        'people': sorted(people.values(), key=lambda item: (
+            -item['counts']['no_show'], -item['counts']['late_cancelled'], item['name'].casefold(),
+        )),
+    })
+    response.headers['Cache-Control'] = 'no-store'
+    return response
+
+
+@app.route('/api/admin/lunch-attendance/<int:date_id>/export')
+@admin_required
+def lunch_attendance_export(date_id):
+    lunch = db.get_or_404(LunchDate, date_id)
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['Lunch date', 'Name', 'Email', 'Attendance', 'Note', 'Cancellation time (London)', 'Last saved (London)'])
+    def safe_cell(value):
+        value = str(value or '')
+        return "'" + value if value.lstrip().startswith(('=', '+', '-', '@', '\t', '\r', '\n')) else value
+    def london_stamp(value):
+        return value.replace(tzinfo=timezone.utc).astimezone(ZoneInfo('Europe/London')).isoformat() if value else ''
+    for booking in Booking.query.filter_by(lunch_date_id=date_id).order_by(Booking.first_name, Booking.last_name).all():
+        writer.writerow([safe_cell(value) for value in [
+            lunch.lunch_date.isoformat(), f'{booking.first_name} {booking.last_name}', booking.email,
+            LUNCH_ATTENDANCE_LABELS[lunch_attendance_status(booking)], booking.attendance_note,
+            london_stamp(booking.cancelled_at), london_stamp(booking.attendance_updated_at),
+        ]])
+    return Response('\ufeff' + output.getvalue(), mimetype='text/csv', headers={
+        'Content-Disposition': f'attachment; filename=womens-lunch-attendance-{lunch.lunch_date.isoformat()}.csv',
+        'Cache-Control': 'no-store',
+    })
+
 
 @app.route('/api/admin/dates')
 @admin_required

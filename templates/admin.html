@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block title %}Admin - LAGC Autistic Women's Lunch{% endblock %}
+{% block styles %}<link rel="stylesheet" href="{{ url_for('static', filename='css/lunch-attendance.css') }}">{% endblock %}
 
 {% block content %}
 <div class="admin-page">
@@ -10,14 +11,46 @@
     </div>
 
     <div class="admin-tabs">
-        <button class="tab-btn active" onclick="showTab('dates')">Lunch Dates</button>
-        <button class="tab-btn" onclick="showTab('bookings')">Bookings</button>
-        <button class="tab-btn" onclick="showTab('archive')">Archive</button>
-        <button class="tab-btn" onclick="showTab('messages')">Message Template</button>
+        <button class="tab-btn active" data-tab="attendance" onclick="showTab('attendance')">Attendance</button>
+        <button class="tab-btn" data-tab="bookings" onclick="showTab('bookings')">Bookings</button>
+        <button class="tab-btn" data-tab="dates" onclick="showTab('dates')">Lunch Dates</button>
+        <button class="tab-btn" data-tab="archive" onclick="showTab('archive')">Archive</button>
+        <button class="tab-btn" data-tab="messages" onclick="showTab('messages')">Message Template</button>
+    </div>
+
+    <div class="tab-content active" id="tab-attendance">
+        <div class="attendance-intro">
+            <p class="attendance-eyebrow">WOMEN'S LUNCH · TEAM REGISTER</p>
+            <h2>Who came to lunch?</h2>
+            <p>Choose the lunch date, then tap an option beside each person. Each choice saves straight away and can be corrected.</p>
+        </div>
+        <div class="attendance-toolbar">
+            <div><label for="attendance-date">Lunch date</label><select id="attendance-date"><option>Loading dates...</option></select></div>
+            <button type="button" class="btn btn-secondary" id="attendance-refresh">Refresh register</button>
+            <a class="btn btn-secondary" id="attendance-export" hidden>Download register</a>
+        </div>
+        <p class="hint">Late cancellation means less than 24 hours before the 12pm start, including cancellations after it starts. Online cancellations appear automatically. You can correct these if someone told you earlier.</p>
+        <div id="attendance-message" role="status" aria-live="polite"></div>
+        <div id="attendance-counts" class="attendance-counts"></div>
+        <div class="attendance-filters">
+            <div><label for="attendance-search">Find someone</label><input type="search" id="attendance-search" placeholder="Name or email"></div>
+            <label class="attendance-check"><input type="checkbox" id="attendance-unrecorded"> Show only people still to check</label>
+        </div>
+        <div id="attendance-register"><p class="loading">Loading the register...</p></div>
+        <details class="attendance-history" id="attendance-history">
+            <summary>Attendance history and patterns</summary>
+            <p class="hint" id="attendance-history-period">The last 12 months, grouped by booking email address. Shared email addresses may represent more than one person.</p>
+            <p class="hint">Use the dates and notes to understand what happened before following up. Unchecked bookings remain “Not recorded”. Attendance records do not restrict future bookings.</p>
+            <div class="attendance-filters">
+                <div><label for="attendance-history-search">Find a person in the history</label><input type="search" id="attendance-history-search" placeholder="Name or email"></div>
+                <div><label for="attendance-history-filter">Show</label><select id="attendance-history-filter"><option value="all">Everyone</option><option value="no_show">People with missed lunches</option><option value="late_cancelled">People with late cancellations</option></select></div>
+            </div>
+            <div id="attendance-people"></div>
+        </details>
     </div>
 
     <!-- Dates Tab -->
-    <div class="tab-content active" id="tab-dates">
+    <div class="tab-content" id="tab-dates">
         <h2>Manage Lunch Dates</h2>
         <p class="hint">Toggle which dates are open for booking. Only one date should be bookable at a time.</p>
         <div class="dates-list" id="admin-dates-list">
@@ -106,4 +139,5 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+<script src="{{ url_for('static', filename='js/lunch-attendance.js') }}"></script>
 {% endblock %}
