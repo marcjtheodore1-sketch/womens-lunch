@@ -250,3 +250,14 @@ or Apple-converted spacing. Newsletter Yes/No behaviour retained. All existing
 uses synthetic availability in its own database, with POST blocked, submission
 disabled and embedded newsletter form inert. No submissions or emails sent.
 Await Chris's explicit publication approval; do not deploy these changes yet.
+
+### Presentation review correction, 2nd November 2026
+
+Chris rejected the bf9e353 visual direction as bland, clinical and corporate.
+Restored portal.css exactly to published c7727fc and restored the original AWSS
+homepage layout/copy, retaining only consistent time formatting. The original
+animated title gradient and glow are restored and verified in the browser.
+The previous card redesign, added section slogans, muted colour changes, layout
+reorganisation and form restyling are withdrawn. Keep the existing character.
+Remaining preview-only changes are public ordinal dates, consistent times,
+a normal hyphen in support copy and the closed-form script guard. No publication.
