@@ -1,10 +1,11 @@
 {% extends "portal_base.html" %}
+{% from "_workplace_dates.html" import full_date %}
 {% block title %}Register | Autistic Workplace Support{% endblock %}
 {% block body_class %}workplace-page form-page{% endblock %}
 {% block content %}
 <section class="page-shell form-shell">
   <a class="back-link" href="{{ url_for('workplace_home') }}">← Back to Workplace Support</a>
-  <div class="form-heading"><p class="eyebrow">Reserve a free place</p><h1>{{ workplace_session.session_date.strftime('%A %d %B %Y') }}</h1><p>1pm–4pm at King Square Community Centre · {{ summary.places_left }} place{% if summary.places_left != 1 %}s{% endif %} left</p></div>
+  <div class="form-heading"><p class="eyebrow">Reserve a free place</p><h1>{{ full_date(workplace_session.session_date) }}</h1><p>1pm to 4pm at King Square Community Centre · {{ summary.places_left }} place{% if summary.places_left != 1 %}s{% endif %} left</p></div>
   {% if summary.is_full or not workplace_session.is_bookable %}<div class="notice-card"><h2>Registration is closed</h2><p>Please choose another date.</p></div>{% else %}
   <form method="post" class="accessible-form" id="workplace-registration-form">
     <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}">
@@ -15,8 +16,8 @@
       <div class="field"><span class="field-label">Are you aged 18 or over? <span>*</span></span><div class="choice-grid"><label class="choice"><input type="radio" name="is_adult" value="yes" required> Yes</label><label class="choice"><input type="radio" name="is_adult" value="no" required> No</label></div></div>
     </fieldset>
     <fieldset><legend>Which parts will you attend?</legend><p class="fieldset-intro">Select one or both. <strong>You must select at least one.</strong></p>
-      <label class="choice session-part-choice"><input type="checkbox" name="attend_mentoring"> <span><strong>1pm–2:30pm: One-to-one mentoring</strong><br>Private time with an autistic employment mentor.</span></label>
-      <label class="choice session-part-choice"><input type="checkbox" name="attend_group_discussion"> <span><strong>2:45pm–4pm: Speaking Circle</strong><br>A confidential, flexible conversation about work experiences.</span></label>
+      <label class="choice session-part-choice"><input type="checkbox" name="attend_mentoring"> <span><strong>1pm to 2.30pm: One-to-one mentoring</strong><br>Private time with an autistic employment mentor.</span></label>
+      <label class="choice session-part-choice"><input type="checkbox" name="attend_group_discussion"> <span><strong>2.45pm to 4pm: Speaking Circle</strong><br>A confidential, flexible conversation about work experiences.</span></label>
       <div id="speaking-circle-commitment" class="confidentiality-commitment" hidden><strong>Speaking Circle confidentiality</strong><p>The Speaking Circle is intended to be a confidential, safe space for sharing.</p><label class="choice consent"><input type="checkbox" name="confidentiality_commitment"> I agree not to share another attendee’s personal story or identifying details outside the session. I understand that safeguarding concerns may need to be shared with LAGC’s safeguarding lead or emergency services.</label></div>
       <div class="field"><span class="field-label">Have you attended these Workplace Support Sessions before?</span><div class="choice-grid"><label class="choice"><input type="radio" name="attended_before" value="yes"> Yes</label><label class="choice"><input type="radio" name="attended_before" value="no"> No</label></div></div>
       <div class="field"><label for="support_hoped_for">What support are you hoping to receive?</label><textarea id="support_hoped_for" name="support_hoped_for" rows="5"></textarea></div>
@@ -35,7 +36,7 @@
         <div id="workplace-carer-fields" class="conditional-fields nested" hidden><div class="field"><label for="carer_name">Carer or support worker’s full name <span>*</span></label><input id="carer_name" name="carer_name" maxlength="200"></div><div class="field"><label for="carer_organisation">Agency or organisation <span>*</span></label><input id="carer_organisation" name="carer_organisation" maxlength="240" placeholder="Write ‘Independent’ if not applicable"></div><div class="field"><label for="carer_mobile">Their mobile number <span>*</span></label><input id="carer_mobile" name="carer_mobile" type="tel" maxlength="40"></div></div>
         <div class="field"><label for="responsibility_details">Who is responsible for each attendee’s support or supervision during the session? <span>*</span></label><textarea id="responsibility_details" name="responsibility_details" rows="4"></textarea></div>
       </div>
-      <div class="support-boundary-notice"><h3>Support on the day</h3><p>There are always at least two LAGC volunteers at every session, alongside your mentor. They are there to host the session and offer employment guidance.</p><p>They aren’t able to provide personal care or one-to-one support. If that’s something you need during the day, you’re very welcome to come along with someone who provides it — a carer, support worker, family member or friend.</p></div>
+      <div class="support-boundary-notice"><h3>Support on the day</h3><p>There are always at least two LAGC volunteers at every session, alongside your mentor. They are there to host the session and offer employment guidance.</p><p>They aren’t able to provide personal care or one-to-one support. If that’s something you need during the day, you’re very welcome to come along with someone who provides it - a carer, support worker, family member or friend.</p></div>
     </fieldset>
     <fieldset class="workplace-newsletter-question"><legend>Monthly employment resources and tips</legend>
       <p class="fieldset-intro">Our free LAGC Employment Support Newsletter shares practical tips, useful resources, opportunities and AWSS updates. It is separate from our general charity newsletter.</p>
@@ -55,7 +56,7 @@
   </form>{% endif %}
 </section>
 {% endblock %}
-{% block scripts %}<script>
+{% block scripts %}{% if not summary.is_full and workplace_session.is_bookable %}<script>
 const newsletterPanel=document.getElementById('employment-newsletter-signup'),newsletterFrame=newsletterPanel?.querySelector('iframe');
 function updateNewsletterSignup(){const show=document.querySelector('[name="newsletter_signup_interest"][value="yes"]')?.checked;newsletterPanel.hidden=!show;if(show&&!newsletterFrame.getAttribute('src'))newsletterFrame.setAttribute('src',newsletterFrame.dataset.src)}
 document.querySelectorAll('[name="newsletter_signup_interest"]').forEach(el=>el.addEventListener('change',updateNewsletterSignup));if(newsletterPanel)updateNewsletterSignup();
@@ -70,4 +71,4 @@ const speakingCircle=document.querySelector('[name="attend_group_discussion"]'),
 function updateConfidentiality(){confidentialityBox.hidden=!speakingCircle.checked;confidentialityCheck.required=speakingCircle.checked;if(!speakingCircle.checked)confidentialityCheck.checked=false}
 function validateSessionParts(){const valid=sessionParts.some(item=>item.checked);sessionParts[0].setCustomValidity(valid?'':'Select at least one part of the session.');return valid}
 sessionParts.forEach(item=>item.addEventListener('change',()=>{validateSessionParts();updateConfidentiality()}));updateConfidentiality();registrationForm.addEventListener('submit',event=>{if(!validateSessionParts()){event.preventDefault();sessionParts[0].reportValidity()}});
-</script>{% endblock %}
+</script>{% endif %}{% endblock %}

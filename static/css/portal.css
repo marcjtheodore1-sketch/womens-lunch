@@ -1104,3 +1104,106 @@ th { background: #f1f5f9; font-size: .73rem; text-transform: uppercase; letter-s
   .workplace-newsletter { padding: 1.25rem; }
   .workplace-newsletter-embed { height: 1250px; }
 }
+
+/* AWSS presentation polish: scoped to public workplace pages. */
+.workplace-page { --muted: #536073; }
+.workplace-page h1, .workplace-page h2, .workplace-page h3 { text-wrap: balance; }
+.workplace-page p, .workplace-page li { overflow-wrap: break-word; }
+.workplace-page a:not(.button) { text-underline-offset: .2em; }
+.workplace-page .section-kicker { color: #98233b; }
+.workplace-hero { padding: clamp(2.5rem, 5vw, 4rem) 1rem 3rem; }
+.workplace-hero .film-club-logo { width: 142px; box-shadow: 0 4px 16px rgba(64, 35, 41, .08); }
+.workplace-hero h1 { letter-spacing: -.035em; line-height: 1.08; margin-block: 1.35rem 1rem; }
+.workplace-hero .glow-heading { filter: none; animation: none; background-image: linear-gradient(110deg, #8f1f34, #bd3650); background-size: 100% 100%; }
+.workplace-hero .hero-lede { max-width: 620px; margin-bottom: 1.6rem; line-height: 1.75; }
+.workplace-page .button.primary:hover, .workplace-page .brand-button:hover { background: #8f1f34; }
+.workplace-page .quick-facts { padding-block: 1.25rem; }
+.workplace-page .quick-facts strong { line-height: 1.5; }
+.workplace-sessions { padding-block: 3rem; }
+.workplace-sessions .section-heading { align-items: center; gap: 1.5rem; }
+.workplace-sessions .screening-grid { gap: 1.25rem; }
+.workplace-sessions .screening-card { grid-template-columns: 76px minmax(0, 1fr); gap: 1rem 1.25rem; padding: 1.5rem; border: 1px solid #dba0ac; border-radius: 14px; align-items: start; }
+.workplace-sessions .screening-card.unavailable { opacity: 1; background: #f4f1e9; border-color: #d8d0c1; box-shadow: none; }
+.workplace-sessions .date-ticket { width: 76px; min-height: 82px; padding: .6rem; border: 0; border-radius: 10px; background: #fae7eb; flex-direction: column; justify-content: center; gap: .15rem; text-align: center; }
+.workplace-sessions .date-ticket strong { line-height: 1; font-size: 2rem; font-variant-numeric: tabular-nums; }
+.workplace-sessions .date-ticket span { color: #7b3846; font-size: .73rem; line-height: 1.5; }
+.workplace-date-year { display: block; font-weight: 500; }
+.workplace-page .screening-info .workplace-session-time { margin: 0 0 .3rem; text-transform: none; font-size: .88rem; font-weight: 600; letter-spacing: 0; }
+.workplace-session-label { margin-top: 0; font-size: .66rem; letter-spacing: .07em; }
+.workplace-session-card h3 { margin-block: .4rem .6rem; font-size: 1.22rem; line-height: 1.35; text-wrap: initial; }
+.workplace-session-card .availability { display: inline-block; margin: 0; }
+.workplace-session-card .button { grid-column: 1 / -1; justify-self: stretch; text-align: center; }
+.workplace-newsletter { margin-block: 2.5rem 0; padding: 1.8rem 2rem; }
+.workplace-newsletter > div { max-width: 850px; }
+.workplace-newsletter h2 { font-size: clamp(1.45rem, 3vw, 1.85rem); line-height: 1.3; margin-bottom: .8rem; }
+.workplace-newsletter p { margin-block: .65rem; }
+.workplace-newsletter .section-kicker { margin-top: 0; }
+.workplace-newsletter .button { margin-top: .5rem; }
+.workplace-story { padding-block: 3.5rem; }
+.workplace-story .story-intro { margin-inline: auto; max-width: 720px; }
+.workplace-programme { gap: 1.5rem; margin-top: 2rem; }
+.workplace-programme article { padding: .5rem 1rem; }
+.workplace-programme h3 { margin-block: .35rem .65rem; line-height: 1.4; }
+.workplace-page .programme-time { font-size: .8rem; text-transform: none; letter-spacing: 0; }
+.workplace-for-section { padding-block: 3.5rem; }
+.workplace-for-section h2 { margin: 0 0 1rem; font-size: clamp(1.9rem, 4vw, 2.6rem); line-height: 1.2; letter-spacing: -.02em; }
+.workplace-for-grid { gap: 3rem; }
+.workplace-check-list { column-gap: 1.5rem; }
+.workplace-expect-card { padding: 1.5rem; border: 1px solid #e3d4b9; border-top: 3px solid #c82e48; background: #fffdf8; border-radius: 12px; }
+.workplace-expect-card ul { padding-left: 1.2rem; }
+.workplace-expect-card li + li { margin-top: .45rem; }
+.workplace-page .public-guidelines-wrap { margin-block: 0 3rem; }
+.workplace-venue { padding: 2rem; gap: 1.75rem 2.5rem; border-width: 1px; border-top-width: 3px; border-radius: 14px; box-shadow: 0 4px 18px rgba(64, 35, 41, .04); align-items: start; }
+.workplace-venue > .venue-copy { grid-column: auto; }
+.workplace-venue .venue-copy p { margin-block: .7rem; }
+.workplace-venue .venue-copy .section-kicker { margin-top: 0; }
+.workplace-venue .venue-map iframe { min-height: 330px; border-width: 1px; }
+.workplace-venue .venue-note-card { padding: 1.1rem 1.3rem; background: #f3f7ed; border: 1px solid #bdcea5; }
+.workplace-venue .venue-note-card p { margin-bottom: 0; }
+.workplace-page.form-page { background: #fffbf5; }
+.workplace-page .form-heading { margin-top: 1.4rem; margin-bottom: 2rem; }
+.workplace-page .form-heading h1 { font-size: clamp(2rem, 4.5vw, 2.8rem); line-height: 1.2; }
+.workplace-page .accessible-form { gap: 1.5rem; }
+.workplace-page .accessible-form fieldset { border-width: 1px; padding: 1.5rem; border-color: #dba0ac; }
+.workplace-page .accessible-form legend { max-width: 100%; line-height: 1.45; }
+.workplace-page .field { margin-block: 1.25rem; }
+.workplace-page .field small { line-height: 1.6; }
+.workplace-page .choice-grid { gap: .75rem; }
+.workplace-page .choice-grid .choice { margin: 0; border-width: 1px; line-height: 1.5; }
+.workplace-page .choice:has(input:checked) { border-color: #a92842; background: #fff0f2; }
+.workplace-page input[type="radio"], .workplace-page input[type="checkbox"] { accent-color: #a92842; }
+.workplace-page .support-boundary-notice { border-width: 1px; }
+.workplace-page .workplace-newsletter-question > p:last-child { font-size: .9rem; color: #475569; }
+@media (max-width: 1000px) and (min-width: 721px) {
+  .workplace-sessions .screening-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .workplace-programme { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .workplace-hero { padding-block: 2.25rem; }
+  .workplace-hero h1 { font-size: clamp(2.05rem, 8.5vw, 3.3rem); letter-spacing: -.03em; }
+  .workplace-hero .film-club-logo { width: 120px; }
+  .workplace-page .quick-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); padding-block: .5rem; }
+  .workplace-page .quick-facts > div, .workplace-page .quick-facts > a { padding: 1rem .6rem; gap: .55rem; border: 0; border-top: 1px solid #e5dcc5; align-items: flex-start; }
+  .workplace-page .quick-facts > :nth-child(-n+2) { border-top: 0; }
+  .workplace-page .quick-facts p { font-size: .84rem; }
+  .workplace-page .fact-icon { font-size: 1.05rem; }
+  .workplace-sessions { padding-block: 2.25rem; }
+  .workplace-sessions .screening-card { padding: 1.2rem; gap: 1rem; grid-template-columns: 68px minmax(0, 1fr); }
+  .workplace-sessions .date-ticket { width: 68px; }
+  .workplace-newsletter { margin-top: 2rem; padding: 1.4rem; }
+  .workplace-story, .workplace-for-section { padding-block: 2.5rem; }
+  .workplace-story > div:first-child { text-align: left; }
+  .workplace-programme { gap: 1.25rem; }
+  .workplace-for-grid { gap: 1.5rem; }
+  .workplace-venue { padding: 1.3rem; gap: 1.5rem; }
+  .workplace-page .form-shell { padding-block: 1.75rem 3rem; }
+  .workplace-page .accessible-form fieldset { padding: 1.1rem; min-width: 0; }
+  .workplace-page .accessible-form legend { font-size: 1.08rem; }
+}
+@media (max-width: 360px) {
+  .workplace-page .quick-facts { grid-template-columns: 1fr; }
+  .workplace-page .quick-facts > :nth-child(2) { border-top: 1px solid #e5dcc5; }
+}
+
+.workplace-sessions .date-ticket .workplace-date-year { font-weight: 500; font-size: .68rem; }
+.workplace-sessions .availability.closed { color: #655d52; }

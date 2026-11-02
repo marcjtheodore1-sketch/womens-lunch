@@ -232,3 +232,21 @@ blocks POST requests, disables booking submission and makes the embedded native
 newsletter form inert. No real booking, subscription or email was submitted.
 Checked optional default state, Yes reveal, No hide and mobile booking-form
 width. Existing 32 tests passed. These changes await Chris's publication approval.
+
+### AWSS presentation polish (preview only, 2nd November 2026)
+
+Branch codex/awss-presentation-polish follows the published c7727fc baseline.
+Retains the cream, burgundy and purple identity. Scoped refinements improve
+heading sharpness, date-card layout, section rhythm, programme alignment,
+venue/map balance and form spacing. Public AWSS dates use ordinal suffixes
+through a small template macro; times use 2.30pm format. Closed registration
+pages omit scripts that require a booking form. No booking or email backend,
+other programme styling or production data changed.
+
+Reviewed desktop and 390px/320px phone layouts, with no horizontal overflow
+in checked views; ordinary spaces in rendered page/form checked, with no NBSP
+or Apple-converted spacing. Newsletter Yes/No behaviour retained. All existing
+32 tests passed; isolated page/date/closed-form smoke checks passed. Preview
+uses synthetic availability in its own database, with POST blocked, submission
+disabled and embedded newsletter form inert. No submissions or emails sent.
+Await Chris's explicit publication approval; do not deploy these changes yet.
