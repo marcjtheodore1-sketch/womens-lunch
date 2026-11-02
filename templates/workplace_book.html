@@ -37,6 +37,17 @@
       </div>
       <div class="support-boundary-notice"><h3>Support on the day</h3><p>There are always at least two LAGC volunteers at every session, alongside your mentor. They are there to host the session and offer employment guidance.</p><p>They aren’t able to provide personal care or one-to-one support. If that’s something you need during the day, you’re very welcome to come along with someone who provides it — a carer, support worker, family member or friend.</p></div>
     </fieldset>
+    <fieldset class="workplace-newsletter-question"><legend>Monthly employment resources and tips</legend>
+      <p class="fieldset-intro">Our free LAGC Employment Support Newsletter shares practical tips, useful resources, opportunities and AWSS updates. It is separate from our general charity newsletter.</p>
+      <div class="field"><span class="field-label" id="newsletter-question">Would you like to register for the Employment Support Newsletter? (Optional)</span><div class="choice-grid" role="group" aria-labelledby="newsletter-question"><label class="choice"><input type="radio" name="newsletter_signup_interest" value="yes" aria-controls="employment-newsletter-signup"> Yes, show me the sign-up form</label><label class="choice"><input type="radio" name="newsletter_signup_interest" value="no" aria-controls="employment-newsletter-signup"> No, thank you</label></div></div>
+      <div id="employment-newsletter-signup" hidden>
+        <p>Complete the newsletter form below and select “Sign me up” to subscribe. Then continue with “Complete registration” for your event place. Selecting Yes alone does not subscribe you.</p>
+        <iframe class="workplace-newsletter-embed" title="Employment Support Newsletter sign-up form" data-src="{{ employment_newsletter_form_url|default('https://jdreamer00.wixforms.com/f/7522989731009791236') }}"></iframe>
+        <p>Having trouble with the form? <a href="{{ employment_newsletter_form_url|default('https://jdreamer00.wixforms.com/f/7522989731009791236') }}" target="_blank" rel="noopener">Open the newsletter sign-up form in a new tab</a>.</p>
+      </div>
+      <p>You can book a session without subscribing, and unsubscribe at any time using the link in each issue or by emailing <a href="mailto:chris.papadopoulos@londonautismgroupcharity.org">Chris</a>. <a href="https://www.londonautismgroupcharity.org/privacy" target="_blank" rel="noopener">How we use your information</a>.</p>
+      <noscript><p><a href="https://www.londonautismgroupcharity.org/employment-support-newsletter" target="_blank" rel="noopener">Sign up to the Employment Support Newsletter in a new tab</a>.</p></noscript>
+    </fieldset>
     {% include '_community_guidelines.html' %}
     <div class="advice-disclaimer"><strong>About the guidance offered</strong><p>Mentoring and peer discussion provide general information and lived-experience perspectives. They are not legal, financial, clinical or other regulated professional advice, and London Autism Group Charity cannot guarantee a particular employment outcome. You remain responsible for decisions or actions you take after the session. Nothing here limits any responsibility that cannot lawfully be excluded.</p></div>
     <div class="privacy-note"><strong>How we use your information</strong><p>We use it to manage your registration, plan appropriate support and contact you about this session.</p></div>
@@ -45,6 +56,9 @@
 </section>
 {% endblock %}
 {% block scripts %}<script>
+const newsletterPanel=document.getElementById('employment-newsletter-signup'),newsletterFrame=newsletterPanel?.querySelector('iframe');
+function updateNewsletterSignup(){const show=document.querySelector('[name="newsletter_signup_interest"][value="yes"]')?.checked;newsletterPanel.hidden=!show;if(show&&!newsletterFrame.getAttribute('src'))newsletterFrame.setAttribute('src',newsletterFrame.dataset.src)}
+document.querySelectorAll('[name="newsletter_signup_interest"]').forEach(el=>el.addEventListener('change',updateNewsletterSignup));if(newsletterPanel)updateNewsletterSignup();
 const companionBox=document.getElementById('workplace-companion-fields'),carerBox=document.getElementById('workplace-carer-fields');
 const companionInputs=[...companionBox.querySelectorAll('input,textarea')],carerInputs=[...carerBox.querySelectorAll('input')];
 function requireFields(items,on){items.forEach(item=>on?item.setAttribute('required',''):item.removeAttribute('required'))}

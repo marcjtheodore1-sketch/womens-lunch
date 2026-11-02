@@ -213,3 +213,22 @@ day, and records each successful session/recipient delivery. It is therefore
 safe for the scheduler to retry. A rota change made before it runs is included;
 rerunning it that evening also delivers to a newly added volunteer without
 resending to recipients already recorded.
+
+### AWSS newsletter page and form invitation (preview)
+
+The AWSS page promotes the Employment Support Newsletter. The AWSS booking form
+has an optional, initially unanswered Yes/No question. Yes reveals the existing
+native Wix newsletter form, loaded only on request. A person must complete that
+separate form and select Sign me up; selecting Yes or completing a booking alone
+does not subscribe them. No newsletter preference is inferred from bookings or
+added to the AWSS invitation contacts. Wix remains the newsletter registration
+source, including its existing Chris-address notification. No new mailing list,
+subscription API, credentials or database migration is introduced.
+
+Preview prepared on 2nd November 2026 in branch codex/awss-newsletter-preview,
+separate from the live checkout. Local review: http://127.0.0.1:5037/workplace-support
+and /workplace-support/register/1. The preview uses synthetic session data,
+blocks POST requests, disables booking submission and makes the embedded native
+newsletter form inert. No real booking, subscription or email was submitted.
+Checked optional default state, Yes reveal, No hide and mobile booking-form
+width. Existing 32 tests passed. These changes await Chris's publication approval.
