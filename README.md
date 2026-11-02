@@ -78,6 +78,9 @@ unknown. The booking page reports a failed send without cancelling the reservati
 
 - Film Club URL: `/admin/film-club`
 - Workplace Support URL: `/admin/workplace-support`
+- AWSS attendee booking confirmations include an optional link to the separate
+  monthly Employment Support Newsletter. Booking does not subscribe anyone.
+  Film Club and Women's Lunch emails do not include this invitation.
 - Women's Lunch URL: `/admin/womens-lunch`
 - Film Club and Women's Lunch password: supplied through `ADMIN_PASSWORD`
 - Workplace Support password: supplied separately through `WORKPLACE_ADMIN_PASSWORD`

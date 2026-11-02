@@ -1065,6 +1065,8 @@ def workplace_confirmation_email(booking, cancel_url, calendar_url):
     <p><a href="{calendar_url}" style="display:inline-block;background:#a92842;color:white;padding:11px 16px;border-radius:8px;text-decoration:none">Add to Google Calendar</a></p>
     <p>A calendar file is also attached for Apple Calendar, Outlook and other calendar apps.</p>
     <p style="background:#fff4f5;padding:14px;border-radius:8px"><strong>Can no longer attend?</strong><br><a href="{cancel_url}">Cancel your place</a> so somebody else can register.</p>
+    <p style="border-top:1px solid #d9dde5;padding-top:16px">Would you like monthly employment resources and tips? Our free LAGC Employment Support Newsletter shares practical tips, helpful resources, opportunities and updates from our Autistic Workplace Support Sessions (AWSS).</p>
+    <p><a href="https://www.londonautismgroupcharity.org/employment-support-newsletter">Subscribe to the Employment Support Newsletter</a>. Signing up is optional and separate from your booking, and you can unsubscribe at any time.</p>
     <p>Warm wishes,<br><strong>LAGC Autistic Workplace Support team</strong><br>London Autism Group Charity</p>
     </body></html>"""
 
