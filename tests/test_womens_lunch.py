@@ -15,8 +15,14 @@ import app as app_module
 
 class WomensLunchBookingTests(unittest.TestCase):
     def setUp(self):
-        app_module.app.config.update(TESTING=True, SECRET_KEY='lunch-test')
+        app_module.app.config.update(
+            TESTING=True, SECRET_KEY='lunch-test', WOMENS_LUNCH_ACCESS_CODE='TestLunch42'
+        )
         self.client = app_module.app.test_client()
+        self.assertEqual(
+            self.client.post('/womens-lunch/access', data={'access_code': 'TestLunch42'}).status_code,
+            303,
+        )
         with app_module.app.app_context():
             app_module.db.drop_all()
             app_module.db.create_all()
@@ -42,6 +48,25 @@ class WomensLunchBookingTests(unittest.TestCase):
         with patch.object(app_module, 'send_confirmation_email', side_effect=email_results or [True, True]) as sender:
             response = self.client.post('/api/book', json=payload)
         return response, sender
+
+    def test_access_code_required_for_booking_page_and_api(self):
+        visitor = app_module.app.test_client()
+        self.assertEqual(visitor.get('/womens-lunch/book').location, '/womens-lunch/access')
+        self.assertEqual(visitor.get('/api/dates').status_code, 403)
+        self.assertEqual(visitor.post('/api/book', json={}).status_code, 403)
+        rejected = visitor.post('/womens-lunch/access', data={'access_code': 'OldLunch42'})
+        self.assertIn(b'Invalid access code', rejected.data)
+        self.assertEqual(visitor.get('/womens-lunch/book').status_code, 302)
+
+        accepted = visitor.post('/womens-lunch/access', data={'access_code': '  testlunch42  '})
+        self.assertEqual(accepted.location, '/womens-lunch/book')
+        self.assertEqual(visitor.get('/womens-lunch/book').status_code, 200)
+        self.assertEqual(visitor.get('/api/dates').status_code, 200)
+        self.assertNotIn(b'TestLunch42', visitor.get('/womens-lunch/access').data)
+
+        with patch.dict(app_module.app.config, WOMENS_LUNCH_ACCESS_CODE='RotatedLunch42'):
+            self.assertEqual(visitor.get('/womens-lunch/book').status_code, 302)
+            self.assertEqual(visitor.get('/api/dates').status_code, 403)
 
     def test_failed_emails_preserve_booking_and_report_failure(self):
         response, sender = self.book(email_results=[False, False])

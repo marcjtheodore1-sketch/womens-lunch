@@ -156,6 +156,11 @@ The live PythonAnywhere checkout is:
 The production database, email credentials, secret key and admin passwords are
 stored only on PythonAnywhere. They are deliberately excluded from Git.
 
+The Women’s Lunch attendee code is stored as a single line in
+`instance/womens-lunch-access-code`. Keep the file private and reload the
+web app after updating it. Existing attendee sessions require the new code
+after a rotation.
+
 ### Publishing a change to GitHub
 
 From a local checkout, including when working with Codex or Claude:

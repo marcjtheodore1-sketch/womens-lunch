@@ -4,13 +4,7 @@
 
 {% block content %}
 <div class="booking-page">
-    <!-- Access Check - This will redirect if no access -->
-    <div id="access-check" style="display: none;">
-        <p>Checking access...</p>
-    </div>
-
-    <!-- Protected Content -->
-    <div id="protected-content" style="display: none;">
+    <div id="protected-content">
         <!-- Venue & Menu Info (Only visible after access) -->
         <div class="protected-info">
             <div class="venue-section-booking">
@@ -234,19 +228,6 @@
     </div>
 </div>
 
-<script>
-// Check access on page load
-(function checkAccess() {
-    const hasAccess = sessionStorage.getItem('womensLunchAccess') === 'granted';
-    if (!hasAccess) {
-        // Redirect to access page if no access
-        window.location.href = '/womens-lunch/access';
-    } else {
-        // Show protected content
-        document.getElementById('protected-content').style.display = 'block';
-    }
-})();
-</script>
 {% endblock %}
 
 {% block scripts %}

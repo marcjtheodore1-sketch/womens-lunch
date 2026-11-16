@@ -15,13 +15,16 @@
             <h2>Have an Access Code?</h2>
             <p>Enter your access code below to view venue details and book your place:</p>
             
-            <div class="form-group">
-                <label for="access-code">Access Code</label>
-                <input type="text" id="access-code" placeholder="Enter your code" autocomplete="off">
-                <small class="error-text hidden" id="code-error">Invalid access code. Please try again.</small>
-            </div>
-            
-            <button class="btn btn-primary" onclick="checkAccessCode()">Continue →</button>
+            <form method="post" action="{{ url_for('access_gate') }}">
+                <div class="form-group">
+                    <label for="access-code">Access Code</label>
+                    <input type="text" id="access-code" name="access_code" placeholder="Enter your code" autocomplete="off" required>
+                    {% if invalid_code %}
+                        <small class="error-text" id="code-error" role="alert">Invalid access code. Please try again.</small>
+                    {% endif %}
+                </div>
+                <button type="submit" class="btn btn-primary">Continue →</button>
+            </form>
         </div>
 
         <div class="divider">
@@ -52,35 +55,6 @@
         </div>
     </div>
 </div>
-
-<script>
-// Access code - change this to your desired code
-const VALID_ACCESS_CODE = 'LAGCLUNCH';
-
-function checkAccessCode() {
-    const codeInput = document.getElementById('access-code');
-    const errorText = document.getElementById('code-error');
-    const enteredCode = codeInput.value.trim().toUpperCase();
-    
-    if (enteredCode === VALID_ACCESS_CODE) {
-        // Store in session that user has access
-        sessionStorage.setItem('womensLunchAccess', 'granted');
-        // Redirect to booking page
-        window.location.href = '/womens-lunch/book';
-    } else {
-        // Show error
-        errorText.classList.remove('hidden');
-        codeInput.style.borderColor = '#e53e3e';
-    }
-}
-
-// Allow Enter key to submit
- document.getElementById('access-code').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        checkAccessCode();
-    }
-});
-</script>
 
 <style>
 .access-page {

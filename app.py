@@ -15,11 +15,13 @@ from datetime import date, datetime, timedelta, time, timezone
 from functools import wraps
 from email.message import EmailMessage
 from html import escape
+from pathlib import Path
 from urllib.parse import quote_plus
 from zoneinfo import ZoneInfo
 import click
 import csv
 import calendar
+import hmac
 import io
 import secrets
 import os
@@ -30,6 +32,13 @@ from email.mime.multipart import MIMEMultipart
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY') or secrets.token_hex(32)
+
+try:
+    app.config['WOMENS_LUNCH_ACCESS_CODE'] = (
+        (Path(app.instance_path) / 'womens-lunch-access-code').read_text(encoding='utf-8').strip()
+    )
+except OSError:
+    app.config['WOMENS_LUNCH_ACCESS_CODE'] = ''
 
 # Database configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///lunch_bookings.db')
@@ -1931,11 +1940,26 @@ def womens_lunch_landing():
     """Existing Women's Lunch landing page."""
     return render_template('landing.html')
 
-@app.route('/womens-lunch/book')
+def womens_lunch_access_version(code):
+    return hmac.new(app.secret_key.encode(), code.casefold().encode(), 'sha256').hexdigest()
+
+
+def has_womens_lunch_access():
+    code = app.config['WOMENS_LUNCH_ACCESS_CODE']
+    granted_version = session.get('womens_lunch_access', '')
+    return bool(code) and secrets.compare_digest(granted_version, womens_lunch_access_version(code))
+
+
 @app.route('/book')
+@app.route('/womens-lunch/book')
 def book():
-    """Booking page"""
-    return render_template('book.html')
+    """Booking page for attendees with the current access code."""
+    if not has_womens_lunch_access():
+        return redirect(url_for('access_gate'))
+    response = app.make_response(render_template('book.html'))
+    response.cache_control.no_store = True
+    return response
+
 
 @app.route('/admin')
 def admin():
@@ -2001,10 +2025,19 @@ def cancel_page(token):
     """Cancellation page"""
     return render_template('cancel.html', token=token)
 
-@app.route('/access')
-@app.route('/womens-lunch/access')
+@app.route('/access', methods=['GET', 'POST'])
+@app.route('/womens-lunch/access', methods=['GET', 'POST'])
 def access_gate():
-    """Access code gate page"""
+    """Validate the current access code on the server."""
+    if request.method == 'POST':
+        code = app.config['WOMENS_LUNCH_ACCESS_CODE']
+        entered_code = request.form.get('access_code', '').strip()
+        if code and secrets.compare_digest(
+            entered_code.casefold().encode(), code.casefold().encode()
+        ):
+            session['womens_lunch_access'] = womens_lunch_access_version(code)
+            return redirect(url_for('book'), code=303)
+        return render_template('access.html', invalid_code=True)
     return render_template('access.html')
 
 
@@ -3397,11 +3430,15 @@ def workplace_admin_bookings_csv():
 @app.route('/api/dates')
 def get_dates():
     """Get all lunch dates"""
+    if not has_womens_lunch_access():
+        return jsonify({'error': 'Enter the current lunch access code to continue.'}), 403
     return jsonify(get_all_future_dates())
 
 @app.route('/api/book', methods=['POST'])
 def create_booking():
     """Create a new booking"""
+    if not has_womens_lunch_access():
+        return jsonify({'error': 'Enter the current lunch access code to continue.'}), 403
     data = request.get_json()
     
     # Validate required fields
