@@ -25,6 +25,11 @@
                 </div>
                 <button type="submit" class="btn btn-primary">Continue →</button>
             </form>
+
+            <div class="access-sharing-note">
+                <p><strong>Please keep the access code private.</strong> We use it to limit who can see the venue details and book a place. This helps protect attendees’ safety and privacy.</p>
+                <p>If you’d like to tell someone about the lunch, share the <a href="{{ url_for('womens_lunch_landing') }}">Women’s Lunch page</a> and ask them to <a href="#request-access">request their own code</a>.</p>
+            </div>
         </div>
 
         <div class="divider">
@@ -32,9 +37,8 @@
         </div>
 
         <!-- Request Access Section -->
-        <div class="request-access-section">
+        <div class="request-access-section" id="request-access">
             <h2>Need an Access Code?</h2>
-            <p>To protect the privacy and safety of our attendees, venue details are only shared with approved participants.</p>
             
             <div class="request-info">
                 <p><strong>To request an access code, please email:</strong></p>
@@ -87,6 +91,14 @@
     font-size: 1.25rem;
     margin-bottom: 1rem;
     color: var(--text-color);
+}
+
+.access-sharing-note {
+    margin-top: 1.25rem;
+}
+
+.access-sharing-note p + p {
+    margin-top: 0.5rem;
 }
 
 .divider {
